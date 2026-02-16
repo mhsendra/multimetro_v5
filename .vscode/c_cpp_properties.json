@@ -1,0 +1,44 @@
+{
+    "version": 4,
+    "configurations": [
+        {
+            "name": "Arduino",
+            "compilerPath": "C:\\Users\\mhsen\\AppData\\Local\\Arduino15\\packages\\arduino\\tools\\avr-gcc\\7.3.0-atmel3.6.1-arduino7\\bin\\avr-g++",
+            "compilerArgs": [
+                "-w",
+                "-std=gnu++11",
+                "-fpermissive",
+                "-fno-exceptions",
+                "-ffunction-sections",
+                "-fdata-sections",
+                "-fno-threadsafe-statics",
+                "-Wno-error=narrowing"
+            ],
+            "intelliSenseMode": "gcc-x64",
+            "includePath": [
+                "C:\\Users\\mhsen\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\avr\\1.8.7\\cores\\arduino",
+                "C:\\Users\\mhsen\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\avr\\1.8.7\\variants\\standard",
+                "C:\\Users\\mhsen\\Documents\\Arduino\\libraries\\PCF8574",
+                "C:\\Users\\mhsen\\Documents\\Arduino\\libraries\\Adafruit_MCP23017_Arduino_Library\\src",
+                "C:\\Users\\mhsen\\Documents\\Arduino\\libraries\\LiquidCrystal_I2C",
+                "C:\\Users\\mhsen\\Documents\\Arduino\\libraries\\Adafruit_ADS1X15",
+                "C:\\Users\\mhsen\\Documents\\Arduino\\libraries\\Adafruit_BusIO",
+                "C:\\Users\\mhsen\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\avr\\1.8.7\\libraries\\Wire\\src",
+                "C:\\Users\\mhsen\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\avr\\1.8.7\\libraries\\SPI\\src",
+                "C:\\Users\\mhsen\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\avr\\1.8.7\\libraries\\EEPROM\\src"
+            ],
+            "forcedInclude": [
+                "C:\\Users\\mhsen\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\avr\\1.8.7\\cores\\arduino\\Arduino.h"
+            ],
+            "cStandard": "c11",
+            "cppStandard": "c++11",
+            "defines": [
+                "F_CPU=16000000L",
+                "ARDUINO=10607",
+                "ARDUINO_AVR_UNO",
+                "ARDUINO_ARCH_AVR",
+                "USBCON"
+            ]
+        }
+    ]
+}
