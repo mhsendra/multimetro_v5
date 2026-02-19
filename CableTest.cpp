@@ -7,7 +7,7 @@
 #include "autoOff.h"
 #include "range_control.h"
 #include "globals.h"
-#include "config.h"
+#include "adcmanager.h"
 
 // Umbral para considerar cable OK
 static constexpr float CABLE_MAX_R = 5.0f;
@@ -17,7 +17,14 @@ static constexpr float CABLE_MAX_R = 5.0f;
  * ===================================================== */
 float measureCable()
 {
-    float R = measureOhmValue();
+    float R = 0;
+    float mv = 0;
+
+    // Seleccionamos automáticamente el rango OHM
+    ADC_RANGE_ID selectedRange = adc_manager_autorange(ADC_CH_SHUNT1, &mv);
+
+    // Convertimos a Ohmios (ejemplo: R = V / I_test, I_test depende del hardware)
+    R = mv / 1000.0f; // Ajusta según tu conversión real
 
     if (R < 0 || isnan(R))
         return NAN;
@@ -30,7 +37,6 @@ float measureCable()
  * ===================================================== */
 void showCable()
 {
-    // Reset de sistemas auxiliares
     backlight_activity();
     autoHold_reset();
     autoOff_reset();
@@ -41,16 +47,13 @@ void showCable()
 
     float R = measureCable();
 
-    // Registrar actividad
     if (!isnan(R))
     {
         backlight_activity();
         autoOff_activity();
     }
 
-    // =================================================
     // AUTO HOLD
-    // =================================================
     if (autoHold_update(R))
     {
         float held = autoHold_getHeldValue();
@@ -79,9 +82,7 @@ void showCable()
         return;
     }
 
-    // =================================================
     // LECTURA NORMAL
-    // =================================================
     lcd_ui_clear(&lcd);
     lcd_printAt(&lcd, 0, 0, "CABLE");
 

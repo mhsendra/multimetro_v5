@@ -1,32 +1,37 @@
 #include <Arduino.h>
-#include "autoOff.h"
-#include <math.h>
 #include "Mode_CAP.h"
-#include "adcmanager.h"
+#include "measurement.h"
 #include "lcd_ui.h"
-#include "globals.h"
-#include "config.h"
-#include "cap_utils.h"
-#include "auto_hold.h"
 #include "backlight.h"
+#include "auto_Hold.h"
 #include "mode_current.h"
 #include "range_control.h"
+#include "filters.h"
+#include "cap_utils.h"
+#include "config.h"
+#include <math.h>
+#include "pins.h"
+#include "globals.h"
+#include "mode_state.h"
+
+void dischargeCap()
+{
+    pinMode(pin.CAP_CHARGE_PIN, OUTPUT);
+    digitalWrite(pin.CAP_CHARGE_PIN, LOW);
+    delay(5); // espera a descargar
+    pinMode(pin.CAP_CHARGE_PIN, INPUT);
+}
 
 // =====================================================
 // PROTECCIÓN POR VOLTAJE RESIDUAL
 // =====================================================
 static bool capResidualVoltageTooHigh()
 {
-    adc_manager_select(RANGE_DC_20V);
-    int16_t raw = 0;
-    if (!adc_manager_read_raw(&raw))
-        return true;
-
-    float v_adc = adc_manager_read_voltage();
+    measurement_result_t meas = measure_channels();
+    float v_adc = meas.voltage;
 
     // Escala del divisor para DC_20V
     float v = v_adc * 0.110f;
-
     return v > CAP_RESIDUAL_VOLT_MAX;
 }
 
@@ -48,19 +53,13 @@ float measureCapacitance()
     pinMode(pin.CAP_CHARGE_PIN, OUTPUT);
     digitalWrite(pin.CAP_CHARGE_PIN, HIGH);
 
-    // 4. Seleccionar rango ADS
-    adc_manager_select(RANGE_DC_2V);
-
-    // 5. Medir tiempo hasta alcanzar el umbral
+    // 4. Medir tiempo hasta umbral
     unsigned long tStart = micros();
 
     while (true)
     {
-        int16_t raw = 0;
-        if (!adc_manager_read_raw(&raw))
-            return -3; // error lectura
-
-        float v = adc_manager_read_voltage();
+        measurement_result_t meas = measure_channels();
+        float v = meas.voltage;
 
         if (v >= CAP_THRESHOLD)
             break;
@@ -71,7 +70,7 @@ float measureCapacitance()
 
     unsigned long dt = micros() - tStart;
 
-    // 6. Obtener resistencia según submodo
+    // 5. Seleccionar resistencia según submodo
     float R = CAP_R_UF;
     switch (capSubMode)
     {
@@ -84,15 +83,15 @@ float measureCapacitance()
     case CAP_RANGE_MF:
         R = CAP_R_MF;
         break;
+    default:
+        break;
     }
 
-    // 7. Calcular capacitancia
+    // 6. Calcular capacitancia
     float C = (float)dt / (R * 1e6);
 
     if (C > 0 && !isnan(C) && !isinf(C))
-    {
         backlight_activity();
-    }
 
     return C;
 }
@@ -102,12 +101,12 @@ float measureCapacitance()
 // =====================================================
 float measureESR_raw()
 {
-    float i = measureCURRENT_calibrated();
-
+    float i = measureCURRENT_RAW();
+    ;
     if (i < 1e-5f)
         return INFINITY;
 
-    return 5.0f / i; // ESR = V / I
+    return 5.0f / i;
 }
 
 // =====================================================
@@ -136,51 +135,17 @@ void showCapacitance()
 
     float C = measureCapacitance();
 
-    if (!isnan(C) && !isinf(C) && C > 0)
-    {
-        backlight_activity();
-    }
-
-    // --- AUTO HOLD ---
     if (autoHold_update(C))
-    {
-        float held = autoHold_getHeldValue();
-        lcd_ui_clear(&lcd);
-        lcd_driver_print(&lcd, "CAP (HOLD)");
-        lcd_ui_setCursor(&lcd, 0, 1);
+        C = autoHold_getHeldValue();
 
-        if (held == -1)
-        {
-            lcd_driver_print(&lcd, "RESIDUAL");
-            return;
-        }
-        if (held == -2)
-        {
-            lcd_driver_print(&lcd, "TIMEOUT");
-            return;
-        }
-
-        if (capSubMode == CAP_RANGE_NF)
-            lcd_driver_printFloat(&lcd, held * 1e9, 1), lcd_driver_print(&lcd, " nF");
-        else if (capSubMode == CAP_RANGE_UF)
-            lcd_driver_printFloat(&lcd, held * 1e6, 1), lcd_driver_print(&lcd, " uF");
-        else
-            lcd_driver_printFloat(&lcd, held * 1e3, 2), lcd_driver_print(&lcd, " mF");
-
-        return;
-    }
-
-    // --- LECTURA NORMAL ---
     lcd_ui_clear(&lcd);
 
-    if (C == -1)
+    switch ((int)C)
     {
-        lcd_driver_print(&lcd, "RESIDUAL VOLT");
+    case -1:
+        lcd_driver_print(&lcd, "RESIDUAL");
         return;
-    }
-
-    if (C == -2)
-    {
+    case -2:
         lcd_driver_print(&lcd, "TIMEOUT");
         return;
     }
@@ -205,50 +170,26 @@ void showESR()
     lcd_driver_print(&lcd, "Detectando...");
     delay(200);
 
-    adc_manager_set_sps(ADC_SPS_860);
-
     float esr = measureESR();
 
-    if (!isnan(esr) && esr != INFINITY)
-    {
-        backlight_activity();
-    }
-
-    // --- AUTO HOLD ---
     if (autoHold_update(esr))
+        esr = autoHold_getHeldValue();
+
+    lcd_ui_clear(&lcd);
+
+    if (esr == INFINITY)
     {
-        float held = autoHold_getHeldValue();
-        lcd_ui_clear(&lcd);
-        lcd_driver_print(&lcd, "ESR (HOLD)");
-        lcd_ui_setCursor(&lcd, 0, 1);
-
-        if (held == INFINITY)
-        {
-            lcd_driver_print(&lcd, "OPEN");
-            return;
-        }
-        if (isnan(held) || held < 0)
-        {
-            lcd_driver_print(&lcd, "ERROR");
-            return;
-        }
-
-        lcd_driver_printFloat(&lcd, held, 2);
-        lcd_driver_print(&lcd, " Ohm");
+        lcd_driver_print(&lcd, "OPEN");
+        return;
+    }
+    if (isnan(esr) || esr < 0)
+    {
+        lcd_driver_print(&lcd, "ERROR");
         return;
     }
 
-    // --- LECTURA NORMAL ---
-    lcd_ui_clear(&lcd);
-    lcd_driver_print(&lcd, "ESR:");
-    lcd_ui_setCursor(&lcd, 0, 1);
-
-    if (esr == INFINITY)
-        lcd_driver_print(&lcd, "OPEN");
-    else if (isnan(esr) || esr < 0)
-        lcd_driver_print(&lcd, "ERROR");
-    else
-        lcd_driver_printFloat(&lcd, esr, 2), lcd_driver_print(&lcd, " Ohm");
+    lcd_driver_printFloat(&lcd, esr, 2);
+    lcd_driver_print(&lcd, " Ohm");
 }
 
 // =====================================================
@@ -265,7 +206,6 @@ void measureCAPMode()
     case CAP_RANGE_MF:
         showCapacitance();
         break;
-
     case CAP_ESR:
         showESR();
         break;

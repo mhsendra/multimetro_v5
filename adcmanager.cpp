@@ -1,49 +1,22 @@
 #include "adcmanager.h"
+#include "globals.h"
 #include <Adafruit_ADS1X15.h>
 
 // =========================
 // Instancia ADS1115
 // =========================
-
 static Adafruit_ADS1115 ads;
 
 // =========================
 // Estado interno
 // =========================
-
-static adc_range_id_t current_range = RANGE_NONE;
-static adc_channel_t current_channel = ADC_CH_0;
-static adsGain_t current_gain = GAIN_ONE;
-static adc_sps_t current_sps = ADC_SPS_250;
+static enum ADC_SPS current_sps = ADC_SPS_250;
 
 // =========================
 // Helpers internos
 // =========================
 
-static void apply_gain_for_range(adc_range_id_t range)
-{
-    switch (range)
-    {
-    case RANGE_DC_200mV:
-        current_gain = GAIN_SIXTEEN; // ±0.256V
-        break;
-
-    case RANGE_CURR_20mA:
-        current_gain = GAIN_EIGHT; // ±0.512V
-        break;
-
-    case RANGE_DC_2V:
-        current_gain = GAIN_TWO; // ±2.048V
-        break;
-
-    default:
-        current_gain = GAIN_ONE; // ±4.096V
-        break;
-    }
-
-    ads.setGain(current_gain);
-}
-
+// Configura la velocidad de muestreo
 static void apply_sps(void)
 {
     switch (current_sps)
@@ -75,6 +48,22 @@ static void apply_sps(void)
     }
 }
 
+// Devuelve el gain de Adafruit según el rango
+static adsGain_t gain_for_range(ADC_RANGE_ID range)
+{
+    switch (range)
+    {
+    case RANGE_LOW:
+        return GAIN_SIXTEEN; // ±0.256V
+    case RANGE_MEDIUM:
+        return GAIN_EIGHT; // ±0.512V
+    case RANGE_HIGH:
+        return GAIN_ONE; // ±4.096V
+    default:
+        return GAIN_ONE;
+    }
+}
+
 // =========================
 // API pública
 // =========================
@@ -82,81 +71,114 @@ static void apply_sps(void)
 void adc_manager_init(void)
 {
     ads.begin();
-    current_range = RANGE_NONE;
     current_sps = ADC_SPS_250;
     apply_sps();
 }
 
-void adc_manager_select(adc_range_id_t range)
+// Autorango automático simple
+ADC_RANGE_ID adc_manager_autorange(enum ADC_CHANNEL_DIFF channel, float *mv_out)
 {
-    current_range = range;
+    int16_t raw = 0;
+    adsGain_t gain = GAIN_ONE;
+    ADC_RANGE_ID selected = RANGE_HIGH;
 
-    switch (range)
+    // Lectura preliminar en rango alto
+    ads.setGain(GAIN_ONE);
+
+    if (channel == ADC_CH_SHUNT1)
+        raw = ads.readADC_Differential_0_1();
+    else
+        raw = ads.readADC_Differential_2_3();
+
+    float mv = ads.computeVolts(raw) * 1000.0f;
+
+    // Selección de rango basado en mV
+    if (mv < 200.0f)
     {
-    case RANGE_CURR_20mA:
-    case RANGE_CURR_200mA:
-        current_channel = ADC_CH_2;
-        break;
-
-    case RANGE_CURR_16A:
-        current_channel = ADC_CH_3;
-        break;
-
-    default:
-        current_channel = ADC_CH_0;
-        break;
+        gain = GAIN_SIXTEEN;
+        selected = RANGE_LOW;
+    }
+    else if (mv < 500.0f)
+    {
+        gain = GAIN_EIGHT;
+        selected = RANGE_MEDIUM;
+    }
+    else
+    {
+        gain = GAIN_ONE;
+        selected = RANGE_HIGH;
     }
 
-    apply_gain_for_range(range);
+    // Aplicar gain final
+    ads.setGain(gain);
+
+    // Lectura definitiva
+    if (channel == ADC_CH_SHUNT1)
+        raw = ads.readADC_Differential_0_1();
+    else
+        raw = ads.readADC_Differential_2_3();
+
+    if (mv_out)
+        *mv_out = ads.computeVolts(raw) * 1000.0f;
+
+    return selected;
 }
 
-bool adc_manager_read_raw(int16_t *raw)
+// Leer raw ADC de un canal diferencial
+bool adc_manager_read_raw(int16_t *raw, enum ADC_CHANNEL_DIFF channel)
 {
     if (!raw)
         return false;
 
-    int16_t value = 0;
-
-    switch (current_channel)
+    switch (channel)
     {
-    case ADC_CH_0:
-        value = ads.readADC_SingleEnded(0);
+    case ADC_CH_SHUNT1:
+        *raw = ads.readADC_Differential_0_1();
         break;
-    case ADC_CH_1:
-        value = ads.readADC_SingleEnded(1);
+    case ADC_CH_SHUNT2:
+        *raw = ads.readADC_Differential_2_3();
         break;
-    case ADC_CH_2:
-        value = ads.readADC_SingleEnded(2);
-        break;
-    case ADC_CH_3:
-        value = ads.readADC_SingleEnded(3);
-        break;
+    default:
+        return false;
     }
-
-    *raw = value;
     return true;
 }
 
-float adc_manager_read_voltage(void)
+// Leer voltaje en mV
+float adc_manager_read_voltage(ADC_CHANNEL_DIFF channel)
 {
     int16_t raw;
-    if (!adc_manager_read_raw(&raw))
+    if (!adc_manager_read_raw(&raw, channel))
         return 0.0f;
 
-    return ads.computeVolts(raw);
+    return ads.computeVolts(raw) * 1000.0f;
 }
 
-adc_range_id_t adc_manager_current_range(void)
+// Selecciona el rango para el ADC según la corriente
+void adc_manager_select(CurrentRange range)
 {
-    return current_range;
+    switch (range)
+    {
+    case CURR_RANGE_mA:        // hasta 20 mA
+        ads.setGain(GAIN_ONE); // ±4.096V
+        ads_mux = ADC_CH_SHUNT1;
+        break;
+
+    case CURR_RANGE_5A:        // hasta 5 A
+        ads.setGain(GAIN_TWO); // ±2.048V
+        ads_mux = ADC_CH_SHUNT1;
+        break;
+
+    case CURR_RANGE_16A:       // hasta 16 A
+        ads.setGain(GAIN_TWO); // ±2.048V
+        ads_mux = ADC_CH_SHUNT2;
+        break;
+    }
 }
 
-void adc_manager_set_sps(adc_sps_t sps)
+// Ajustar velocidad de muestreo
+void adc_manager_set_sps(enum ADC_SPS sps)
 {
     current_sps = sps;
     apply_sps();
-}
-float adc_manager_raw_to_voltage(int16_t raw)
-{
-    return ads.computeVolts(raw);
 }

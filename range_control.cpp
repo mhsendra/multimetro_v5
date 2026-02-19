@@ -25,6 +25,32 @@ void rng_release_for_gpio()
     rng_released = true;
 }
 
+void ohm_select_range(OhmSubMode mode)
+{
+    // Apagar todos los SSR primero
+    digitalWrite(pin.SSR_LOW, LOW);
+    digitalWrite(pin.SSR_MID, LOW);
+    digitalWrite(pin.SSR_HIGH, LOW);
+
+    // Activar según rango
+    switch (mode)
+    {
+    case OHM_MAIN: // ejemplo 1kΩ
+        digitalWrite(pin.SSR_LOW, HIGH);
+        break;
+
+    case OHM_CONT: // ejemplo 10kΩ
+        digitalWrite(pin.SSR_MID, HIGH);
+        break;
+
+    case OHM_REL: // ejemplo 100kΩ
+    case OHM_MINMAX:
+    case OHM_CABLE:
+        digitalWrite(pin.SSR_HIGH, HIGH);
+        break;
+    }
+}
+
 void rng_restore_for_ohm()
 {
     if (!rng_released)

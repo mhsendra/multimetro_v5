@@ -1,148 +1,66 @@
-#include <Arduino.h>
-#include "autoOff.h"
 #include "mode_zener.h"
-#include "adcmanager.h"
+#include "matrix.h"
+#include "measurement.h"
 #include "lcd_ui.h"
-#include "auto_hold.h"
-#include "backlight.h"
 #include "globals.h"
-#include "range_control.h"
-#include "config.h"
-#include "io_expander_mcp23017.h"
+#include "auto_Hold.h"
+#include "backlight.h"
 
-/* =====================================================
- * CONFIGURACIÓN DEL DIVISOR PARA ZENER
- * ===================================================== */
-// RUP = 100k, RDOWN = 22k  → factor ≈ 0.18
-static constexpr float ZENER_DIV_FACTOR = (22.0f / (100.0f + 22.0f));
+static constexpr float ZENER_DIV_FACTOR = 22.0f / (100.0f + 22.0f);
+static constexpr float ZENER_ADC_MAX = 4.95f;
 
-// Índice del pin BOOST_HV_CTRL en el MCP23017
-#define BOOST_HV_CTRL 0
+static float zener_rms_accum = 0.0f;
+static constexpr float zener_rms_alpha = 0.05f;
 
-void setupExpanders()
+static float measureZener_raw()
 {
-    mcpExpander.begin();
-    pcf8574.begin();
+    matrix_disconnect_all();
+    matrix_zener();
+    delay(10);
 
-    // Configura pines
-    mcp23017.pinMode(0, OUTPUT);
-    pcfExpander.pinMode(0, OUTPUT);
+    measurement_result_t meas = measure_channels();
+    float vz_adc = meas.voltage;
+    if (vz_adc > ZENER_ADC_MAX)
+        vz_adc = ZENER_ADC_MAX;
+
+    float vz = vz_adc / ZENER_DIV_FACTOR;
+    return (vz < 0.5f) ? NAN : vz;
 }
 
-/* =====================================================
- * CONTROL DEL BOOSTER
- * ===================================================== */
-static inline void booster_set_5V()
+static float measureZener_calibrated()
 {
-    mcpExpander.digitalWrite(BOOST_HV_CTRL, HIGH); // MOSFET ON → 5V
+    float vz = measureZener_raw();
+    if (!isnan(vz))
+    {
+        zener_rms_accum = sqrtf((1.0f - zener_rms_alpha) * zener_rms_accum * zener_rms_accum +
+                                zener_rms_alpha * vz * vz);
+        return zener_rms_accum;
+    }
+    return NAN;
 }
 
-static inline void booster_set_24V()
+void showZenerMain()
 {
-    mcpExpander.digitalWrite(BOOST_HV_CTRL, LOW); // MOSFET OFF → 24V
-}
+    float vz = measureZener_calibrated();
+    if (autoHold_update(vz))
+        vz = autoHold_getHeldValue();
 
-static inline void booster_init()
-{
-    mcpExpander.digitalWrite(BOOST_HV_CTRL, HIGH); // modo seguro al arrancar
-}
-
-/* =====================================================
- * MEDIR DIODO ZENER
- * ===================================================== */
-float measureZener()
-{
-    rng_release_for_gpio(); // liberar RNG para este modo
-
-    booster_set_24V(); // activar modo alta tensión
-    delay(10);         // estabilizar el booster
-
-    // Preparar pines de test
-    pinMode(pin.TP1, OUTPUT);
-    digitalWrite(pin.TP1, HIGH); // corriente de prueba
-    pinMode(pin.TP2, INPUT);
-
-    // Configurar ADC
-    adc_manager_select(RANGE_DC_20V);
-    adc_manager_set_sps(ADC_SPS_475);
-
-    delay(10); // estabilizar señal
-
-    // Leer tensión en el divisor
-    float v_adc = adc_manager_read_voltage();
-
-    // Protección por saturación del ADC
-    if (v_adc > 4.95f)
-        v_adc = 4.95f;
-
-    // Convertir a tensión real del zener
-    float vz = v_adc / ZENER_DIV_FACTOR;
-
-    // Reset de pines
-    pinMode(pin.TP1, INPUT);
-    pinMode(pin.TP2, INPUT);
-
-    booster_set_5V(); // volver a modo normal
-
-    if (vz < 0.5f) // muy bajo, probablemente no hay zener
-        return NAN;
-
-    return vz;
-}
-
-/* =====================================================
- * PANTALLA Y AUTO HOLD
- * ===================================================== */
-void mode_zener_run()
-{
-    mcpExpander.begin(); // inicializa MCP23017
-    booster_init();      // asegurar estado inicial
+    lcd_ui_clear(&lcd);
+    lcd_driver_print(&lcd, "ZENER: ");
+    if (isnan(vz))
+        lcd_driver_print(&lcd, "OL");
+    else
+    {
+        lcd_driver_printFloat(&lcd, vz, 2);
+        lcd_driver_print(&lcd, " V");
+    }
 
     backlight_activity();
+}
+
+void measureZENER_MODE()
+{
+    backlight_activity();
     autoHold_reset();
-
-    lcd_ui_clear(&lcd);
-    lcd_driver_print(&lcd, "Detectando Zener...");
-    delay(200);
-
-    float vz = measureZener();
-
-    if (!isnan(vz))
-        backlight_activity();
-
-    // --- AUTO HOLD ---
-    if (autoHold_update(vz))
-    {
-        float held = autoHold_getHeldValue();
-
-        lcd_ui_clear(&lcd);
-        lcd_driver_print(&lcd, "ZENER (HOLD)");
-        lcd_ui_setCursor(&lcd, 0, 1);
-
-        if (isnan(held))
-        {
-            lcd_driver_print(&lcd, "OL");
-            return;
-        }
-
-        lcd_driver_print(&lcd, "Vz:");
-        lcd_driver_printFloat(&lcd, held, 2);
-        lcd_driver_print(&lcd, " V");
-        return;
-    }
-
-    // --- Lectura normal ---
-    lcd_ui_clear(&lcd);
-    lcd_driver_print(&lcd, "ZENER");
-    lcd_ui_setCursor(&lcd, 0, 1);
-
-    if (isnan(vz))
-    {
-        lcd_driver_print(&lcd, "OL");
-        return;
-    }
-
-    lcd_driver_print(&lcd, "Vz:");
-    lcd_driver_printFloat(&lcd, vz, 2);
-    lcd_driver_print(&lcd, " V");
+    showZenerMain();
 }

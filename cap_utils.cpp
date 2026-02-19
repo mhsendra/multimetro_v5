@@ -1,33 +1,16 @@
 #include "cap_utils.h"
 #include "adcmanager.h"
 #include "globals.h"
-#include "config.h"
 
-// =====================================================
-// DESCARGA DEL CONDENSADOR
-// =====================================================
-void dischargeCap()
-{
-    pinMode(pin.CAP_CHARGE_PIN, OUTPUT);
-    digitalWrite(pin.CAP_CHARGE_PIN, LOW);
-    delay(CAP_DISCHARGE_MS);
-}
-
-// =====================================================
-// PROTECCIÓN POR VOLTAJE RESIDUAL
-// =====================================================
 bool prepareCapMeasurement()
 {
-    // Seleccionar rango DC_20V del ADS1115
-    adc_manager_select(RANGE_DC_20V);
-    adc_manager_set_sps(ADC_SPS_475);
+    float mv = 0;
 
-    // Leer tensión directamente desde el pin CAP (TP correspondiente)
-    float v = adc_manager_read_voltage();
+    // Autorango para medición de capacitancia
+    ADC_RANGE_ID selectedRange = adc_manager_autorange(ADC_CH_SHUNT1, &mv);
 
-    if (v > CAP_RESIDUAL_VOLT_MAX)
-        return false;
+    float v = mv / 1000.0f;
 
-    dischargeCap();
-    return true;
+    // Si hay tensión residual, no iniciar carga
+    return (v < 0.01f);
 }

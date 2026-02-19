@@ -7,9 +7,9 @@ struct Pins
 {
 
     // Selector rotativo
-    const uint8_t SEL0 = 2; // PD2
-    const uint8_t SEL1 = 3; // PD3
-    const uint8_t SEL2 = 4; // PD4
+    // PD2
+    // PD3
+    // PD4
 
     // Rango OHM → 74HC138
     const uint8_t RNG0 = 8;  // PB0
@@ -46,6 +46,15 @@ struct MCP_Pins
 {
     uint8_t BOOST_HV_CTRL = 0;
     uint8_t NCV = 1;
+    uint8_t SSR_ZENER = 2;
+    uint8_t SEL0 = 3;  // Posición 0
+    uint8_t SEL1 = 4;  // Posición 1
+    uint8_t SEL2 = 5;  // Posición 2
+    uint8_t SEL3 = 6;  // Posición 3
+    uint8_t SEL4 = 7;  // Posición 4
+    uint8_t SEL5 = 8;  // Posición 5
+    uint8_t SEL6 = 9;  // Posición 6
+    uint8_t SEL7 = 10; // Posición 7
 };
 
 #endif

@@ -1,26 +1,23 @@
 #include "mode_freq.h"
-#include "autoOff.h"
-#include "adcmanager.h"
 #include "lcd_ui.h"
 #include "globals.h"
-#include "config.h"
-#include "auto_Hold.h"
 #include "backlight.h"
-#include <math.h>
+#include "auto_hold.h"
+#include "autoOff.h"
 #include "range_control.h"
+#include "measurement.h"
+#include <Arduino.h>
+#include "mode_state.h"
 
 // =====================================================
-// LECTURA ANALÓGICA PARA FRECUENCIA (MISMO NODO QUE OHM)
+// LECTURA ANALÓGICA PARA FRECUENCIA
 // =====================================================
 static float freq_read_voltage()
 {
-    // Permite liberar 3 pines RNGx para uso fuera MODE OHM
-    rng_release_for_gpio();
+    rng_release_for_gpio(); // liberar RNGx para uso fuera de OHM
 
-    // Usamos el mismo canal/rango que OHM
-    adc_manager_select(RANGE_OHM_100);
-
-    return adc_manager_read_voltage();
+    measurement_result_t meas = measure_channels();
+    return meas.voltage;
 }
 
 // =====================================================
@@ -53,7 +50,6 @@ float measureFrequency_raw()
             return 0.0f;
 
     unsigned long t2 = micros();
-
     float period_us = (float)(t2 - t1);
     if (period_us <= 0.0f)
         return 0.0f;
@@ -81,7 +77,6 @@ float measureDutyCycle()
     const float TH = 0.5f;
 
     unsigned long tStart = micros();
-
     while (freq_read_voltage() < TH)
         if (micros() - tStart > TIMEOUT)
             return 0.0f;
@@ -93,22 +88,17 @@ float measureDutyCycle()
             return 0.0f;
 
     unsigned long tRise = micros();
-
     while (freq_read_voltage() > TH)
         if (micros() - tRise > TIMEOUT)
             return 0.0f;
-
     unsigned long tFall = micros();
-
     while (freq_read_voltage() < TH)
         if (micros() - tRise > TIMEOUT)
             return 0.0f;
-
     unsigned long tNextRise = micros();
 
     float high_us = (float)(tFall - tRise);
     float period_us = (float)(tNextRise - tRise);
-
     if (period_us <= 0.0f)
         return 0.0f;
 
@@ -124,17 +114,14 @@ float measurePulseWidth()
     const float TH = 0.5f;
 
     unsigned long tStart = micros();
-
     while (freq_read_voltage() < TH)
         if (micros() - tStart > TIMEOUT)
             return 0.0f;
 
     unsigned long tRise = micros();
-
     while (freq_read_voltage() > TH)
         if (micros() - tRise > TIMEOUT)
             return 0.0f;
-
     unsigned long tFall = micros();
 
     return (float)(tFall - tRise);
@@ -157,11 +144,8 @@ float measurePeriod()
 void showFrequency()
 {
     float f = measureFrequency_calibrated();
-
     if (f > 0.0f)
-    {
         backlight_activity();
-    }
 
     if (autoHold_update(f))
         f = autoHold_getHeldValue();
@@ -175,11 +159,8 @@ void showFrequency()
 void showDutyCycle()
 {
     float d = measureDutyCycle();
-
     if (d > 0.0f)
-    {
         backlight_activity();
-    }
 
     lcd_ui_clear(&lcd);
     lcd_driver_print(&lcd, "DUTY:");
@@ -190,11 +171,8 @@ void showDutyCycle()
 void showPulseWidth()
 {
     float pw = measurePulseWidth();
-
     if (pw > 0.0f)
-    {
         backlight_activity();
-    }
 
     lcd_ui_clear(&lcd);
     lcd_driver_print(&lcd, "PW:");
@@ -205,11 +183,8 @@ void showPulseWidth()
 void showPeriod()
 {
     float p = measurePeriod();
-
     if (p > 0.0f)
-    {
         backlight_activity();
-    }
 
     lcd_ui_clear(&lcd);
     lcd_driver_print(&lcd, "PER:");
@@ -218,13 +193,11 @@ void showPeriod()
 }
 
 // =====================================================
-// MODO COMPLETO
+// MODO COMPLETO FRECUENCIA
 // =====================================================
 void measureFREQ()
 {
     backlight_activity();
-
-    adc_manager_set_sps(ADC_SPS_860); // Máxima velocidad
 
     switch (freqSubMode)
     {
@@ -241,4 +214,28 @@ void measureFREQ()
         showPeriod();
         break;
     }
+}
+
+// =====================================================
+// WRAPPERS PARA SISTEMA DE MENÚ
+// =====================================================
+
+void measureFreq_Main(void)
+{
+    showFrequency();
+}
+
+void measureFreq_Duty(void)
+{
+    showDutyCycle();
+}
+
+void measureFreq_PulseWidth(void)
+{
+    showPulseWidth();
+}
+
+void measureFreq_Period(void)
+{
+    showPeriod();
 }

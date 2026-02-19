@@ -1,17 +1,15 @@
 #include "io_expander_mcp23017.h"
 #include <Arduino.h>
 
-// Constructor
 IOExpanderMCP23017::IOExpanderMCP23017(Adafruit_MCP23X17 *expander, uint8_t i2cAddr)
 {
     _expander = expander;
-    _i2cAddr = i2cAddr; // guardar dirección
+    _i2cAddr = i2cAddr;
 }
 
-// Inicialización
 void IOExpanderMCP23017::begin()
 {
-    _initialized = _expander->begin_I2C(_i2cAddr); // usar la dirección pasada
+    _initialized = _expander->begin_I2C(_i2cAddr);
     if (!_initialized)
     {
         Serial.println("Error: MCP23017 no inicializado!");
@@ -25,7 +23,6 @@ void IOExpanderMCP23017::begin()
     }
 }
 
-// pinMode
 void IOExpanderMCP23017::pinMode(uint8_t pin, uint8_t mode)
 {
     if (!_initialized)
@@ -35,7 +32,6 @@ void IOExpanderMCP23017::pinMode(uint8_t pin, uint8_t mode)
         _expander->digitalWrite(pin, HIGH);
 }
 
-// digitalWrite
 void IOExpanderMCP23017::digitalWrite(uint8_t pin, uint8_t value)
 {
     if (!_initialized)
@@ -43,7 +39,6 @@ void IOExpanderMCP23017::digitalWrite(uint8_t pin, uint8_t value)
     _expander->digitalWrite(pin, value);
 }
 
-// digitalRead
 int IOExpanderMCP23017::digitalRead(uint8_t pin)
 {
     if (!_initialized)

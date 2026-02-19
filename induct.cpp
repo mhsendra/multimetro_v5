@@ -32,13 +32,13 @@ float measureInductance_raw()
     digitalWrite(pin.TP1, HIGH);
     delay(200);
 
-    float i0 = measureCURRENT_calibrated() * 1000.0f; // A → mA
+    float i0 = measureCURRENT_RAW() * 1000.0f; // A → mA
 
     // Descarga parcial
     digitalWrite(pin.TP1, LOW);
     delayMicroseconds(150);
 
-    float i1 = measureCURRENT_calibrated() * 1000.0f;
+    float i1 = measureCURRENT_RAW() * 1000.0f;
 
     // Restaurar pines
     pinMode(pin.TP1, INPUT);

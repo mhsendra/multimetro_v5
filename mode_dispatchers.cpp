@@ -1,8 +1,8 @@
 // globals
 #include "globals.h"
 #include "autoOff.h"
-
 #include "mode_dispatchers.h"
+#include "mode_state.h"
 
 // includes de todos los modos
 #include "mode_vdc.h"
@@ -11,10 +11,7 @@
 #include "mode_ohm.h"
 #include "mode_cap.h"
 #include "mode_freq.h"
-#include "mode_diode.h"
-#include "mode_transistor.h"
-#include "mode_mosfet.h"
-#include "mode_zener.h"
+#include "mode_semiconductor.h"
 #include "induct.h"
 
 void dispatchMode(MainMode selectedMode)
@@ -22,11 +19,11 @@ void dispatchMode(MainMode selectedMode)
     switch (selectedMode)
     {
     case MODE_VDC:
-        measureVDC_MODE();
+        measureVDC_MODE(vdcSubMode);
         break;
 
     case MODE_VAC:
-        measureVAC_MODE();
+        measureVAC_MODE(vacSubMode);
         break;
 
     case MODE_CURRENT:
@@ -34,7 +31,7 @@ void dispatchMode(MainMode selectedMode)
         break;
 
     case MODE_OHM:
-        measureOHM_MODE();
+        measureOHM_MODE(ohmSubMode);
         break;
 
     case MODE_CAP:
@@ -45,25 +42,8 @@ void dispatchMode(MainMode selectedMode)
         measureFREQ();
         break;
 
-    case MODE_PN: // Aquí reemplazamos mode_pn.cpp
-        switch (diodeSubMode)
-        {
-        case DIODE_MAIN:
-            showDiode();
-            break;
-
-        case DIODE_TRANSISTOR:
-            showTransistor();
-            break;
-
-        case DIODE_MOSFET:
-            showMosfet();
-            break;
-
-        case DIODE_ZENER:
-            mode_zener_run();
-            break;
-        }
+    case MODE_SEMICONDUCTOR:
+        measureSemiconductorMode(semiconductorSubMode);
         break;
 
     case MODE_INDUCT:

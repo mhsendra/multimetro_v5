@@ -1,21 +1,35 @@
 #ifndef MODE_OHM_H
 #define MODE_OHM_H
 
-#include <Arduino.h>
+#include <stdbool.h>
 #include "config.h"
 
-// Prototipos
-void measureOHM_MODE();
-bool detectVoltageOnOhm();
-void setOhmRange(OhmRange range);
-float calculateResistance(float v, OhmRange range);
-float measureOhmValue();
+// =====================================================
+// Medición
+// =====================================================
+float measureOHM_Raw(void);
+float measureOHM_Calibrated(void);
+float measureOHM_ForSubMode(void); // general para submodos si necesitas
 
-void autoRangeOhms(float R);
-void medirOhmiosContinuidad();
-void showContinuity();
-void showOhmRelative();
-void showOhmMinMax();
-void showCableTest();
+// =====================================================
+// Pantallas
+// =====================================================
+void showOHM_R(void);
+void showOHM_Cont(void);
+void showOHM_Rel(void);
+void showOHM_Cable(void);
 
-#endif
+// =====================================================
+// Modo completo
+// =====================================================
+void measureOHM_MODE(OhmSubMode submode);
+
+// =====================================================
+// Wrappers para menú
+// =====================================================
+void measureOHM_Main(void);
+void measureOHM_Cont_Wrap(void);
+void measureOHM_Rel_Wrap(void);
+void measureOHM_Cable_Wrap(void);
+
+#endif // MODE_OHM_H

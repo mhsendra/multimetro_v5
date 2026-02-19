@@ -10,6 +10,10 @@
 #include <Arduino.h>
 #include "lcd_ui.h"
 #include "globals.h"
+#include "config.h"
+#include "measurement.h"
+#include "range_control.h"
+#include "pins.h"
 
 // =====================================================
 // CARGAR CALIBRACIÓN
@@ -26,10 +30,28 @@ void loadCalibration()
 
         cal.curr_shunt_gain = 1.0;
         cal.curr_shunt_offset = 0.0;
-
-        cal.acs_offset = 2.5;
-        cal.acs_sens = 0.185;
     }
+}
+
+// =====================================================
+// MEDICIÓN OHM RAW
+// =====================================================
+static float measureOHM_RAW(OhmSubMode mode)
+{
+    rng_release_for_gpio(); // liberar pines
+
+    // Activar SSR según submodo OHM
+    ohm_select_range(mode);
+
+    // Medición
+    measurement_result_t meas = measure_channels();
+
+    // Apagar SSR tras medir
+    digitalWrite(pin.SSR_LOW, LOW);
+    digitalWrite(pin.SSR_MID, LOW);
+    digitalWrite(pin.SSR_HIGH, LOW);
+
+    return meas.voltage;
 }
 
 // =====================================================
@@ -47,7 +69,7 @@ void calibrateVDC()
         ;
     delay(300);
 
-    float v_meas = measureVDC_calibrated();
+    float v_meas = measureVDC();
     cal.vdc = 5.00 / v_meas;
 }
 
@@ -63,7 +85,8 @@ void calibrateVAC()
         ;
     delay(300);
 
-    float v_meas = measureVAC_calibrated();
+    measurement_result_t meas = measure_channels();
+    float v_meas = meas.voltage;
     cal.vac = 230.0 / v_meas;
 }
 
@@ -79,8 +102,11 @@ void calibrateOHM()
         ;
     delay(300);
 
-    float r_meas = measureOhmValue();
-    cal.ohm = 1000.0 / r_meas;
+    OhmSubMode mode = OHM_MAIN;          // rango principal para calibración
+    ohm_select_range(mode);              // activa SSR correcto
+    float r_meas = measureOHM_RAW(mode); // medición RAW
+
+    cal.ohm = 1000.0 / r_meas; // guardar factor de calibración
 }
 
 void calibrateCurrent_mA()
@@ -95,7 +121,7 @@ void calibrateCurrent_mA()
         ;
     delay(300);
 
-    cal.curr_shunt_offset = measureCURRENT_calibrated();
+    cal.curr_shunt_offset = measureCURRENT_RAW();
 
     lcd_ui_clear(&lcd);
     lcd_ui_setCursor(&lcd, 0, 0);
@@ -107,7 +133,7 @@ void calibrateCurrent_mA()
         ;
     delay(300);
 
-    float v_load = measureCURRENT_calibrated();
+    float v_load = measureCURRENT_RAW();
     cal.curr_shunt_gain = 0.100 / (v_load - cal.curr_shunt_offset);
 }
 
@@ -123,37 +149,14 @@ void calibrateCurrent_5A()
         ;
     delay(300);
 
-    float v_load = measureCURRENT_calibrated();
+    float v_load = measureCURRENT_RAW();
     cal.curr_shunt_gain = 5.0 / (v_load - cal.curr_shunt_offset);
 }
 
-void calibrateCurrent_16A()
-{
-    lcd_ui_clear(&lcd);
-    lcd_ui_setCursor(&lcd, 0, 0);
-    lcd_driver_print(&lcd, "ACS: 0A");
-    lcd_ui_setCursor(&lcd, 0, 1);
-    lcd_driver_print(&lcd, "OK=CAL");
-
-    while (digitalRead(pin.PIN_CAL) == HIGH)
-        ;
-    delay(300);
-
-    cal.acs_offset = measureCurrent_ACS_RAW();
-
-    lcd_ui_clear(&lcd);
-    lcd_ui_setCursor(&lcd, 0, 0);
-    lcd_driver_print(&lcd, "ACS: 10A");
-    lcd_ui_setCursor(&lcd, 0, 1);
-    lcd_driver_print(&lcd, "OK=CAL");
-
-    while (digitalRead(pin.PIN_CAL) == HIGH)
-        ;
-    delay(300);
-
-    float v_load = measureCurrent_ACS_RAW();
-    cal.acs_sens = (v_load - cal.acs_offset) / 10.0;
-}
+// =====================================================
+// ACS 16A pendiente
+// =====================================================
+// void calibrateCurrent_16A() { /* pendiente */ }
 
 void calibrateESR()
 {
@@ -167,7 +170,7 @@ void calibrateESR()
         ;
     delay(300);
 
-    float i0 = measureCURRENT_calibrated();
+    float i0 = measureCURRENT_RAW();
     if (i0 < 0.00001f)
         i0 = 0.00001f;
 
@@ -232,14 +235,13 @@ void enterCalibration()
     delay(300);
 
     cal.vdc = cal.vac = cal.ohm = 1.0;
-    cal.acs_offset = measureCurrent_ACS_RAW();
 
     calibrateVDC();
     calibrateVAC();
     calibrateOHM();
     calibrateCurrent_mA();
     calibrateCurrent_5A();
-    calibrateCurrent_16A();
+    // calibrateCurrent_16A(); // pendiente
     calibrateESR();
     calibrateFrequency();
     calibrateInductance();

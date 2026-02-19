@@ -7,7 +7,8 @@
 class IOExpanderMCP23017 : public IOExpander
 {
 public:
-    IOExpanderMCP23017(Adafruit_MCP23X17 *expander, uint8_t i2cAddr); // <--- ahora recibe dirección
+    IOExpanderMCP23017(Adafruit_MCP23X17 *expander, uint8_t i2cAddr);
+
     void begin() override;
     void pinMode(uint8_t pin, uint8_t mode) override;
     void digitalWrite(uint8_t pin, uint8_t value) override;
@@ -15,7 +16,7 @@ public:
 
 private:
     Adafruit_MCP23X17 *_expander;
-    uint8_t _i2cAddr; // <--- almacenar dirección I2C
+    uint8_t _i2cAddr;
     bool _initialized = false;
 };
 

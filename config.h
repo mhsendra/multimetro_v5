@@ -2,6 +2,52 @@
 #define CONFIG_H
 
 #include <Arduino.h>
+#include <stdint.h>
+#include <stdbool.h>
+
+// =========================
+// Canales diferenciales ADC
+// =========================
+enum ADC_CHANNEL_DIFF
+{
+    ADC_CH_SHUNT1 = 0, // AIN0–AIN1
+    ADC_CH_SHUNT2 = 1  // AIN2–AIN3
+};
+
+// =========================
+// Canales single-ended ADC
+// =========================
+enum ADC_CHANNEL_SINGLE
+{
+    ADC_CH_ZENER = 0, // AIN0
+
+};
+
+// =========================
+// Rangos de medición
+// =========================
+enum ADC_RANGE_ID
+{
+    RANGE_NONE = 0,
+    RANGE_LOW,
+    RANGE_MEDIUM,
+    RANGE_HIGH
+};
+
+// =========================
+// Velocidad de muestreo
+// =========================
+enum ADC_SPS
+{
+    ADC_SPS_8,
+    ADC_SPS_16,
+    ADC_SPS_32,
+    ADC_SPS_64,
+    ADC_SPS_128,
+    ADC_SPS_250,
+    ADC_SPS_475,
+    ADC_SPS_860
+};
 
 // =====================================================
 // ENUMS
@@ -15,7 +61,7 @@ enum MainMode
     MODE_OHM,
     MODE_CAP,
     MODE_FREQ,
-    MODE_PN,
+    MODE_SEMICONDUCTOR,
     MODE_INDUCT
 };
 
@@ -29,20 +75,6 @@ enum MeasureMode
     MEASURE_CURR_A = 5,
     MEASURE_CAP = 6,
     MEASURE_L = 7
-};
-
-enum PNType
-{
-    PN_NONE,
-    PN_DIODE,
-    PN_TRANSISTOR
-};
-
-enum OhmRange
-{
-    OHM_RANGE_LOW,
-    OHM_RANGE_MID,
-    OHM_RANGE_HIGH
 };
 
 enum CurrentRange
@@ -84,15 +116,6 @@ enum OhmSubMode
     OHM_CABLE
 };
 
-enum DiodeSubMode
-{
-    DIODE_MAIN,
-    DIODE_ZENER,
-    DIODE_AUTO,
-    DIODE_TRANSISTOR,
-    DIODE_MOSFET
-};
-
 enum CapSubMode
 {
     CAP_RANGE_NF,
@@ -101,21 +124,23 @@ enum CapSubMode
     CAP_ESR
 };
 
+enum SemiconductorSubMode
+{
+    SEMI_DIODE,
+    SEMI_TRANSISTOR,
+    SEMI_MOSFET,
+    SEMI_ZENER,
+};
+
 // =====================================================
 // CONSTANTES
 // =====================================================
-#define ADC_VOLT 0
-#define ADC_OHM 1
-#define ADC_IMA 2
-#define ADC_ACS 3
 #define CAP_ADC_CH ADC_OHM
 
 #define OHM_VREF 5.0
 #define OHM_PROTECT_THRESHOLD 0.8f
 #define VAC_DIVIDER 101.0
 
-#define SHUNT_MAIN_OHMS 0.10f
-#define SHUNT_16A_OHMS 0.033f
 #define SHUNT_GAIN 6.6f
 
 #define OHM_100_MAX 80.0f   // si pasa de 80 Ω → subir a 10K
@@ -126,6 +151,13 @@ enum CapSubMode
 
 #define CONT_ON_OHMS 30.0
 #define CONT_OFF_OHMS 60.0
+
+// =====================================================
+// Constantes de corriente de test
+// =====================================================
+#define I_TEST_100 0.001f
+#define I_TEST_10K 0.0001f
+#define I_TEST_1M 0.0000001f
 
 #define CAP_THRESHOLD (OHM_VREF * 0.632)
 #define CAP_TIMEOUT_US 3000000UL
@@ -154,63 +186,56 @@ enum CapSubMode
 // config.h
 
 // Direcciones I2C
-#define I2C_ADDR_PCF8574 0x20
-#define I2C_ADDR_MCP23017 0x21
+#define I2C_ADDR_MCP23017 0x20
 #define I2C_ADDR_LCD 0x27
 
 #define LCD_COLS 16
 #define LCD_ROWS 2
 
-// =====================================================
-// CALIBRACIÓN
-// =====================================================
+// =========================
+// Constantes de hardware
+// =========================
+#define SHUNT1_R 0.1f
+#define SHUNT2_R 0.033f
+
+// -------------------- SUBMODOS GENÉRICOS --------------------
+typedef void (*MeasureFunction)(void); // 👈 puntero a función
+
+struct SubModeEntry
+{
+    int id;                      // Enum del submodo
+    const char *displayName;     // Texto LCD
+    MeasureFunction measureFunc; // 👈 función asociada
+};
+
 struct Calibration
 {
-
     float vdc;
-    float ohm;
     float vac;
-
-    // --- Corriente shunt (mA y 5A) ---
-    float curr_shunt_gain;   // A/V
-    float curr_shunt_offset; // V
-
-    // --- Corriente ACS712 (16A) ---
-    float acs_offset; // V
-    float acs_sens;   // V/A
-
-    // --- ESR ---
+    float ohm;
+    float curr_shunt_gain;
+    float curr_shunt_offset;
     float esr_factor;
-
-    // --- Frecuencia ---
+    float zener_factor;
     float freq_factor;
-
-    // --- Inductancia ---
     float induct_factor;
 };
 
-// -------------------- SUBMODOS GENÉRICOS --------------------
-typedef struct
-{
-    int id;                  // Enum del submodo
-    const char *displayName; // Texto que aparece en el LCD
-} SubModeEntry;
-
 // -------------------- TABLA DE SUBMODOS --------------------
-typedef struct
+struct ModeTable
 {
     const char *title;            // Nombre del menú
     const SubModeEntry *subModes; // Puntero a tabla de submodos
     int numSubModes;              // Número de submodos
-} ModeTable;
+};
 
 // -------------------- MODO PRINCIPAL --------------------
-typedef struct
+struct Mode
 {
     const char *name;       // Nombre lógico del modo (ej: "VDC")
     const ModeTable *table; // Tabla de submodos
     int currentSubModeId;   // Submodo activo
-} Mode;
+};
 
 // -------------------- VARIABLES EXTERNAS --------------------
 extern Mode modes[];

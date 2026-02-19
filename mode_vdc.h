@@ -1,34 +1,39 @@
 #ifndef MODE_VDC_H
 #define MODE_VDC_H
 
-#include <Arduino.h>
-#include "globals.h"
+#include <stdbool.h>
+#include "config.h"
 
 // =====================================================
-// FUNCIONES DE MEDICIÓN
+// Medición
 // =====================================================
-float measureVDC_raw(void);
-float measureVDC_calibrated(void);
+float measureVDC(void);
 float measureVDC_Relative(void);
 float measurePower(void);
 float measureEnergy(void);
+float measureCurrentEstimated(void);
 
 // =====================================================
-// FUNCIONES DE PANTALLA
+// Pantallas
 // =====================================================
 void showVDC(void);
 void showVDC_Relative(void);
 void showPower(void);
 void showEnergy(void);
+void showEstCurrent(void);
 
 // =====================================================
-// MODO COMPLETO VDC
+// Modo completo
 // =====================================================
-void measureVDC_MODE(void);
+void measureVDC_MODE(VdcSubMode submode);
 
 // =====================================================
-// UTILIDADES
+// Wrappers para menú
 // =====================================================
-bool use_millivolts(float v);
+void measureVDC_Main(void);
+void measureVDC_Rel(void);
+void measureVDC_Power(void);
+void measureVDC_Energy(void);
+void measureVDC_EstCurr(void);
 
 #endif // MODE_VDC_H

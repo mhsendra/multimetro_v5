@@ -7,12 +7,9 @@
 #include <LiquidCrystal_I2C.h>
 #include "filters.h"
 #include "lcd_driver.h"
-#include <PCF8574.h>
 #include <Adafruit_MCP23X17.h>
-#include "expander_selector.h"
 #include "io_expander.h"
 #include "io_expander_mcp23017.h"
-#include "io_expander_pcf8574.h"
 
 // === Pines ===
 extern Pins pin;
@@ -21,8 +18,6 @@ extern MCP_Pins mcpPin;
 // Medidas
 extern float vdcRef;
 extern float ohmRef;
-extern float ohmMin;
-extern float ohmMax;
 
 // LCD
 extern LCD_Handle lcd;
@@ -39,31 +34,13 @@ extern Butterworth2 bw_vdc;
 extern Butterworth2 bw_vac;
 extern Butterworth2 bw_current;
 
-// Modos y submodos
-extern MainMode selectedMode;
-extern DiodeSubMode diodeSubMode;
-extern CapSubMode capSubMode;
-extern FreqSubMode freqSubMode;
-extern OhmSubMode ohmSubMode;
-extern VdcSubMode vdcSubMode;
-extern VacSubMode vacSubMode;
-extern OhmRange currentOhmRange;
-extern CurrentRange currentRange;
-
 // Estado expanders
 extern uint8_t pcf_state;
 
 // Objetos hardware globales
-extern PCF8574 pcf8574;
 extern Adafruit_MCP23X17 mcp23017;
 
-// Wrappers
-extern IOExpanderPCF8574 pcfExpander;
-extern IOExpanderMCP23017 mcpExpander;
-extern IOExpander *expanders[2];
-
-// Selector
-extern ExpanderSelector selector;
+extern IOExpander *ioExpander;
 
 // VAC RMS
 extern float vac_rms_accum;
@@ -73,9 +50,6 @@ extern float vac_rms_alpha;
 extern float vdc_ranges[3];
 extern int vdc_range;
 extern float acsOffset;
-
-// Calibración
-extern Calibration cal;
 
 // Cable test
 extern bool cableOK;
@@ -93,8 +67,15 @@ extern uint16_t ads_mux;
 extern uint16_t ads_gain;
 extern uint16_t ads_sps;
 
-// Estado PCF8574
-extern uint8_t matrix_pcf_state;
+extern Calibration cal;
+
+extern const float SHUNT_5A_LIMIT;
+extern const float SHUNT_16A_LIMIT;
+extern const float SHUNT1_MAX_CURRENT;
+extern const float SHUNT2_MAX_CURRENT;
+
+extern ADC_RANGE_ID currentOhmRange;
+extern CurrentRange currentRange;
 
 // Estados iniciales
 #define MAIN_MODE_OFF 0
@@ -108,5 +89,7 @@ extern uint8_t matrix_pcf_state;
 // Rangos
 #define OHM_RANGE_AUTO 0
 #define CURRENT_RANGE_AUTO 0
+
+bool use_millivolts(float value);
 
 #endif

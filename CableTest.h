@@ -1,6 +1,17 @@
 #ifndef CABLE_TEST_H
 #define CABLE_TEST_H
 
-void cableTest_update();
+#include <Arduino.h>
+#include "globals.h"
 
-#endif
+// -------------------------------------------------
+// Función principal para medir y mostrar el cable
+// -------------------------------------------------
+void measureCableMode(void);
+
+// -------------------------------------------------
+// Funciones de medición directa (opcional)
+// -------------------------------------------------
+float measureCable(void); // Retorna la resistencia medida en Ohm
+
+#endif // CABLE_TEST_H

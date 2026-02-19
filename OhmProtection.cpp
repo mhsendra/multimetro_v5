@@ -1,23 +1,29 @@
+#include <Arduino.h>
 #include "OhmProtection.h"
 #include "adcmanager.h"
-#include "config.h"
+#include "globals.h"
 
+/* =====================================================
+ * DETECCIÓN DE VOLTAJE SOBRE RESISTENCIA (Protección OHM)
+ * ===================================================== */
 bool detectVoltageOnOhm()
 {
-    // Selecciona el rango usado para la medición de protección de OHM
-    adc_manager_select(RANGE_OHM_100);
+    // Variable para almacenar el valor medido en mV
+    float mv = 0;
 
-    // Promediar varias lecturas
-    const int samples = 20;
-    float sum = 0.0f;
+    // Selección automática de rango para el canal diferencial de OHM
+    // IMPORTANTE: indicar el canal concreto a leer
+    ADC_RANGE_ID selectedRange = adc_manager_autorange(ADC_CH_SHUNT1, &mv);
+    // si quieres medir con otro shunt, usa ADC_CH_SHUNT2
 
-    for (int i = 0; i < samples; i++)
+    // Convertir a voltios
+    float v = mv / 1000.0f;
+
+    // Si hay algún voltaje, hay tensión aplicada y no es seguro medir OHM
+    if (v > 0.01f) // umbral 10 mV
     {
-        float v = adc_manager_read_voltage();
-        sum += v;
+        return true;
     }
 
-    float avg = sum / samples;
-
-    return avg > OHM_PROTECT_THRESHOLD;
+    return false;
 }

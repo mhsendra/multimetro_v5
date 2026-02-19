@@ -1,71 +1,37 @@
 #ifndef ADCMANAGER_H
 #define ADCMANAGER_H
 
-#include <Arduino.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include "config.h" // Incluye los enums y constantes de hardware
 #include <Adafruit_ADS1X15.h>
 
 // =========================
-// Tipos públicos
+// Inicialización
 // =========================
-
-typedef enum
-{
-    ADC_CH_0 = 0,
-    ADC_CH_1,
-    ADC_CH_2,
-    ADC_CH_3
-} adc_channel_t;
-
-typedef enum
-{
-    ADC_SPS_8,
-    ADC_SPS_16,
-    ADC_SPS_32,
-    ADC_SPS_64,
-    ADC_SPS_128,
-    ADC_SPS_250,
-    ADC_SPS_475,
-    ADC_SPS_860
-} adc_sps_t;
-
-typedef enum
-{
-    RANGE_NONE,
-
-    RANGE_DC_200mV,
-    RANGE_DC_2V,
-    RANGE_DC_20V,
-    RANGE_DC_200V,
-
-    RANGE_AC_2V,
-    RANGE_AC_20V,
-    RANGE_AC_200V,
-
-    RANGE_CURR_20mA,
-    RANGE_CURR_200mA,
-    RANGE_CURR_16A,
-
-    RANGE_OHM_100,
-    RANGE_OHM_10K,
-    RANGE_OHM_1M,
-
-    RANGE_TRANSISTOR
-} adc_range_id_t;
-
-// =========================
-// API pública
-// =========================
-
 void adc_manager_init(void);
 
-void adc_manager_select(adc_range_id_t range);
+// =========================
+// Autorango automático
+// Devuelve el rango seleccionado y opcionalmente el voltaje leído en mV
+// =========================
+ADC_RANGE_ID adc_manager_autorange(enum ADC_CHANNEL_DIFF channel, float *mv_out);
 
-bool adc_manager_read_raw(int16_t *raw);
+// =========================
+// Lectura raw ADC de un canal diferencial
+// =========================
+bool adc_manager_read_raw(int16_t *raw, enum ADC_CHANNEL_DIFF channel);
 
-float adc_manager_read_voltage(void);
+// =========================
+// Lectura de voltaje en mV
+// =========================
+float adc_manager_read_voltage(ADC_CHANNEL_DIFF channel);
 
-adc_range_id_t adc_manager_current_range(void);
+void adc_manager_select(CurrentRange range);
 
-void adc_manager_set_sps(adc_sps_t sps);
+// =========================
+// Ajuste de velocidad de muestreo (SPS)
+// =========================
+void adc_manager_set_sps(enum ADC_SPS sps);
 
 #endif // ADCMANAGER_H

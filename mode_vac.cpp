@@ -1,39 +1,43 @@
 #include "mode_vac.h"
-#include "autoOff.h"
-#include "adcmanager.h"
-#include "globals.h"
+#include "measurement.h"
 #include "lcd_ui.h"
-#include "config.h"
-#include <math.h>
-#include "auto_Hold.h"
 #include "backlight.h"
-#include "range_control.h"
+#include "auto_Hold.h"
+#include "globals.h"
+#include <math.h>
+#include "config.h"
 
-// =====================================================
-// CONFIGURACIÓN VAC
-// =====================================================
-#define VAC_SAMPLES 256 // si quieres puedes dejarlo para compatibilidad
+// ===============================
+// Variables internas
+// ===============================
+static float filter_vac = NAN;
+static float vac_reference = NAN;
 
-// =====================================================
-// AUTO-RANGO VISUAL (mV / V) con histéresis
-// =====================================================
-static bool use_millivolts_vac(float v)
+// ===============================
+// Medición
+// ===============================
+float measureVAC_RMS(void)
 {
-    static bool in_mV = false;
-    if (v < 0.95f)
-        in_mV = true;
-    if (v > 1.05f)
-        in_mV = false;
-    return in_mV;
+    // En tu código actual, measureVAC_Relative() devuelve la medición de RMS
+    return measureVAC_Relative();
 }
 
-// =====================================================
-// PANTALLAS
-// =====================================================
+float measureVAC_Relative(void)
+{
+    // Misma función que antes, devuelve RMS relativo
+    static float ref = NAN;
+    float v = measureVAC_Relative(); // tu función existente
+    if (isnan(ref))
+        ref = v;
+    return v - ref;
+}
+
+// ===============================
+// Pantallas
+// ===============================
 void showVAC(void)
 {
-    float v = vac_rms_accum; // usar RMS deslizante global
-
+    float v = measureVAC_RMS();
     if (autoHold_update(v))
         v = autoHold_getHeldValue();
 
@@ -46,7 +50,7 @@ void showVAC(void)
     }
 
     lcd_driver_print(&lcd, "VAC: ");
-    if (use_millivolts_vac(v))
+    if (use_millivolts(v))
     {
         lcd_driver_printFloat(&lcd, v * 1000.0f, 1);
         lcd_driver_print(&lcd, " mV");
@@ -60,17 +64,17 @@ void showVAC(void)
 
 void showVAC_Relative(void)
 {
-    float v = measureVAC_Relative(); // puedes mantener la versión relativa con offset
+    float v = measureVAC_Relative();
     lcd_ui_clear(&lcd);
 
     if (isinf(v))
     {
-        lcd_driver_print(&lcd, "REL AC: OVL");
+        lcd_driver_print(&lcd, "REL: OVL");
         return;
     }
 
-    lcd_driver_print(&lcd, "REL AC: ");
-    if (use_millivolts_vac(fabs(v)))
+    lcd_driver_print(&lcd, "REL: ");
+    if (use_millivolts(fabs(v)))
     {
         lcd_driver_printFloat(&lcd, v * 1000.0f, 1);
         lcd_driver_print(&lcd, " mV");
@@ -82,56 +86,24 @@ void showVAC_Relative(void)
     }
 }
 
-// =====================================================
-// VAC — CALIBRADO
-// =====================================================
-float measureVAC_calibrated(void)
+// ===============================
+// Modo completo por submodo
+// ===============================
+void measureVAC_MODE(VacSubMode submode)
 {
-    float v = adc_manager_read_voltage() * cal.vac;
-
-    // Si medición fuera de rango
-    if (fabs(v) > 4.95f)
-        return INFINITY;
-
-    return v;
-}
-
-// =====================================================
-// VAC RELATIVO
-// =====================================================
-static float vac_reference = NAN;
-
-float measureVAC_Relative(void)
-{
-    float v = measureVAC_calibrated();
-    if (isnan(vac_reference))
-        vac_reference = v;
-    return v - vac_reference;
-}
-
-// =====================================================
-// MODO VAC ITERATIVO (llamar desde loop)
-// =====================================================
-void measureVAC_MODE(void)
-{
-    // 1️⃣ Leer ADC y aplicar calibración
-    float v = adc_manager_read_voltage() * cal.vac;
-
-    // 2️⃣ RMS deslizante IIR
-    vac_rms_accum = sqrtf((1.0f - vac_rms_alpha) * vac_rms_accum * vac_rms_accum + vac_rms_alpha * v * v);
-
-    // 3️⃣ Actualizar pantalla según submodo
-    switch (vacSubMode)
+    switch (submode)
     {
     case VAC_MAIN:
         showVAC();
         break;
-
     case VAC_REL:
         showVAC_Relative();
         break;
     }
-
-    // 4️⃣ Actividad backlight
-    backlight_activity();
 }
+
+// ===============================
+// Wrappers para menú
+// ===============================
+void measureVAC_Main(void) { showVAC(); }
+void measureVAC_Rel(void) { showVAC_Relative(); }

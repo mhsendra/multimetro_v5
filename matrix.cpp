@@ -1,84 +1,99 @@
 #include "matrix.h"
 #include "globals.h"
-#include <stdint.h>
+#include <Arduino.h>
+#include "io_expander_mcp23017.h"
 
-// ===============================
-// PCF8574 bit masks (shadow byte)
-// ===============================
-#define PCF_ZENER_AQY (1 << 7)
-
+// =====================================================
+// DESCONEXIÓN GENERAL
+// =====================================================
 void matrix_disconnect_all()
 {
-    // Apagar SSR del ATmega
-    digitalWrite(pin.SSR_LOW, LOW);
-    digitalWrite(pin.SSR_MID, LOW);
-    digitalWrite(pin.SSR_HIGH, LOW);
-    digitalWrite(pin.SSR_SHUNT, LOW);
+    // Apagar todos los SSR
+    mcp23017.digitalWrite(pin.SSR_LOW, LOW);
+    mcp23017.digitalWrite(pin.SSR_MID, LOW);
+    mcp23017.digitalWrite(pin.SSR_HIGH, LOW);
+    mcp23017.digitalWrite(pin.SSR_SHUNT, LOW);
 
-    // PCF shadow register
-    pcf_state &= ~PCF_ZENER_AQY;
-    for (uint8_t i = 0; i < 8; i++)
-    {
-        pcfExpander.digitalWrite(i, (pcf_state >> i) & 0x01);
-    }
+    // Liberar rangos OHM
+    mcp23017.digitalWrite(pin.RNG0, LOW);
+    mcp23017.digitalWrite(pin.RNG1, LOW);
+    mcp23017.digitalWrite(pin.RNG2, LOW);
 }
 
-// -------------------------------
-// Test points (ADS1115 selecciona canal internamente)
-// -------------------------------
-void matrix_select_tp1()
-{
-    // El ADS1115 selecciona canal dentro de readADC()
-}
+// =====================================================
+// TEST POINTS (ADC selecciona canal internamente)
+// =====================================================
+void matrix_select_tp1() { matrix_disconnect_all(); }
+void matrix_select_tp2() { matrix_disconnect_all(); }
+void matrix_select_tp3() { matrix_disconnect_all(); }
 
-void matrix_select_tp2()
-{
-    // El ADS1115 selecciona canal dentro de readADC()
-}
-
-void matrix_select_tp3()
-{
-    // El ADS1115 selecciona canal dentro de readADC()
-}
-
-// -------------------------------
-// Shunts (corriente)
-// -------------------------------
+// =====================================================
+// SHUNTS (CORRIENTE)
+// =====================================================
 void matrix_shunt_low()
 {
-    digitalWrite(pin.SSR_SHUNT, HIGH);
+    matrix_disconnect_all();
+    mcp23017.digitalWrite(pin.SSR_SHUNT, HIGH); // Shunt 0.1Ω
 }
 
 void matrix_shunt_mid()
 {
-    digitalWrite(pin.SSR_SHUNT, HIGH);
+    matrix_disconnect_all();
+    mcp23017.digitalWrite(pin.SSR_SHUNT, HIGH); // Shunt 0.033Ω
 }
 
 void matrix_shunt_high()
 {
-    digitalWrite(pin.SSR_SHUNT, HIGH);
+    matrix_disconnect_all();
+    mcp23017.digitalWrite(pin.SSR_SHUNT, HIGH); // Puede ser el mismo pin en V5
 }
 
-// -------------------------------
-// Rangos OHM (74HC138)
-// -------------------------------
+// =====================================================
+// RANGOS OHM
+// =====================================================
 void matrix_ohm_low()
 {
-    digitalWrite(pin.RNG0, LOW);
-    digitalWrite(pin.RNG1, LOW);
-    digitalWrite(pin.RNG2, LOW);
+    matrix_disconnect_all();
+    mcp23017.digitalWrite(pin.RNG0, LOW);
+    mcp23017.digitalWrite(pin.RNG1, LOW);
+    mcp23017.digitalWrite(pin.RNG2, LOW);
 }
 
 void matrix_ohm_mid()
 {
-    digitalWrite(pin.RNG0, HIGH);
-    digitalWrite(pin.RNG1, LOW);
-    digitalWrite(pin.RNG2, LOW);
+    matrix_disconnect_all();
+    mcp23017.digitalWrite(pin.RNG0, HIGH);
+    mcp23017.digitalWrite(pin.RNG1, LOW);
+    mcp23017.digitalWrite(pin.RNG2, LOW);
 }
 
 void matrix_ohm_high()
 {
-    digitalWrite(pin.RNG0, LOW);
-    digitalWrite(pin.RNG1, HIGH);
-    digitalWrite(pin.RNG2, LOW);
+    matrix_disconnect_all();
+    mcp23017.digitalWrite(pin.RNG0, LOW);
+    mcp23017.digitalWrite(pin.RNG1, HIGH);
+    mcp23017.digitalWrite(pin.RNG2, LOW);
+}
+
+// =====================================================
+// ZENER
+// =====================================================
+void matrix_zener()
+{
+    matrix_disconnect_all();
+    // Activar SSR Zener a través del MCP23017
+    mcp23017.digitalWrite(mcpPin.SSR_ZENER, HIGH);
+}
+
+// =====================================================
+// INICIALIZACIÓN
+// =====================================================
+void matrix_init()
+{
+    // Configura todos los pines MCP como OUTPUT por defecto
+    for (uint8_t i = 0; i < 16; i++)
+    {
+        mcp23017.pinMode(i, OUTPUT);
+        mcp23017.digitalWrite(i, LOW);
+    }
 }

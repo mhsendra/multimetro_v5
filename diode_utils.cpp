@@ -1,33 +1,30 @@
+#include <Arduino.h>
 #include "diode_utils.h"
 #include "adcmanager.h"
 #include "globals.h"
-#include "config.h"
-#include "range_control.h"
 
-// =====================================================
-// Devuelve true si hay conducción entre pinA → pinB
-// =====================================================
-bool diodeConducts(uint8_t pinA, uint8_t pinB)
+uint8_t getTPNumber(uint8_t pinValue)
 {
-    // 1) Configurar pinA como salida y ponerlo a HIGH
-    pinMode(pinA, OUTPUT);
-    digitalWrite(pinA, HIGH);
+    if (pinValue == pin.TP1)
+        return 1;
+    if (pinValue == pin.TP2)
+        return 2;
+    if (pinValue == pin.TP3)
+        return 3;
+    return 0;
+}
 
-    // 2) Configurar pinB como entrada
-    pinMode(pinB, INPUT);
+bool diodeConducts(uint8_t pinAnode, uint8_t pinCathode)
+{
+    // Aquí asumimos que ya se aplicó tensión de prueba entre anodo y cátodo
 
-    delayMicroseconds(200);
+    float mv = 0;
 
-    // 3) Liberar ADC / seleccionar canal automáticamente
-    rng_release_for_gpio();
+    // Medimos el voltaje entre anodo y cátodo
+    ADC_RANGE_ID selectedRange = adc_manager_autorange(ADC_CH_SHUNT1, &mv);
 
-    // 4) Leer tensión usando adc_manager
-    float v = adc_manager_read_voltage();
+    float v = mv / 1000.0f;
 
-    // 5) Resetear pines
-    pinMode(pinA, INPUT);
-    pinMode(pinB, INPUT);
-
-    // 6) Consideramos conducción si la caída es > 0.15 V
-    return (v > 0.15f);
+    // Consideramos que conduce si supera 0.2 V (diode forward drop)
+    return (v > 0.2f);
 }

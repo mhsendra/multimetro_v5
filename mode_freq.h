@@ -1,23 +1,32 @@
 #ifndef MODE_FREQ_H
 #define MODE_FREQ_H
 
-#include <Arduino.h>
-#include "config.h"
+// =====================================================
+// Medición
+// =====================================================
+float measureFrequency_raw(void);
+float measureFrequency_calibrated(void);
 
-// Medidas base
-float measureFrequency_raw();
-float measureFrequency_calibrated();
-float measureDutyCycle();
-float measurePulseWidth();
-float measurePeriod();
+float measureDutyCycle(void);
+float measurePulseWidth(void);
+float measurePeriod(void);
 
+// =====================================================
 // Pantallas
-void showFrequency();
-void showDutyCycle();
-void showPulseWidth();
-void showPeriod();
+// =====================================================
+void showFrequency(void);
+void showDutyCycle(void);
+void showPulseWidth(void);
+void showPeriod(void);
 
+// =====================================================
 // Modo completo
-void measureFREQ();
+// =====================================================
+void measureFREQ(void);
 
-#endif
+void measureFreq_Main(void);
+void measureFreq_Duty(void);
+void measureFreq_PulseWidth(void);
+void measureFreq_Period(void);
+
+#endif // MODE_FREQ_H

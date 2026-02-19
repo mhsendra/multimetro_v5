@@ -1,28 +1,38 @@
 #ifndef MATRIX_H
 #define MATRIX_H
 
-#include <stdint.h>
-#include "globals.h"
+#include <Arduino.h>
 
-// Desconecta absolutamente todo (estado seguro)
+// =====================================================
+// Inicialización de la matriz
+// =====================================================
+void matrix_init();
 void matrix_disconnect_all();
 
-// Restaura el estado previo del PCF8574
-void matrix_restore();
-
-// Selección de test points (ADC)
+// =====================================================
+// Test Points
+// =====================================================
 void matrix_select_tp1();
 void matrix_select_tp2();
 void matrix_select_tp3();
 
-// Selección de shunts (corriente)
-void matrix_shunt_low();
-void matrix_shunt_mid();
-void matrix_shunt_high();
+// =====================================================
+// Shunts (corriente)
+// =====================================================
+void matrix_shunt_low();  // 0.1Ω
+void matrix_shunt_mid();  // 0.033Ω
+void matrix_shunt_high(); // para rangos mayores (si aplica)
 
-// Selección de rangos OHM
+// =====================================================
+// Rangos OHM
+// =====================================================
 void matrix_ohm_low();
 void matrix_ohm_mid();
 void matrix_ohm_high();
+
+// =====================================================
+// Zener
+// =====================================================
+void matrix_zener();
 
 #endif

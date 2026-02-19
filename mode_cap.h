@@ -2,19 +2,15 @@
 #define MODE_CAP_H
 
 #include <Arduino.h>
-#include "config.h"
+#include <stdbool.h>
 
-// Medición principal de capacitancia
-float measureCapacitance();
+// Inicialización
+void mode_cap_init(void);
 
-// ESR integrado como submodo CAP
-float measureESR();
+// Modo completo CAP
+void measureCAPMode(void);
 
-// Pantallas
-void showCapacitance();
-void showESR();
+// descarga del capacitor
+void dischargeCap();
 
-// Modo CAP completo
-void measureCAPMode();
-
-#endif
+#endif // MODE_CAP_H
