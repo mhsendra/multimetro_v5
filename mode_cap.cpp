@@ -12,6 +12,11 @@
 #include "mode_state.h"
 #include "mode_current.h"
 
+void resetCapMode()
+{
+    // reset acumuladores si existen
+}
+
 // Descarga el condensador
 void dischargeCap()
 {

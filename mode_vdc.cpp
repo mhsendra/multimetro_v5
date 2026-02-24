@@ -13,14 +13,18 @@
 // ===============================
 static float filterVdc = 0.0f;
 static Butterworth2 bwVdc;
-static float filterPower = -1e9;
+static float filterPower = -1e9f;
 static float vdc_reference = NAN;
 static unsigned long lastEnergyUpdate = 0;
 static float energy_Wh = 0.0f;
 static float filterCurrentEstimated = -1e9f;
 
-void enterVdcMode()
+void resetVdcMode()
 {
+    filterVdc = -1e9f;
+    filterCurrentEstimated = -1e9f;
+    filterPower = -1e9f;
+
     bwVdc.reset();
 }
 

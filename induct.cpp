@@ -10,6 +10,11 @@
 #include <Arduino.h>
 #include <math.h>
 
+void resetInductMode()
+{
+    // reset estado interno
+}
+
 // ===============================
 // Medición RAW interna
 // ===============================

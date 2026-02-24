@@ -5,6 +5,11 @@
 #include "mode_zener.h"
 #include "backlight.h"
 
+void resetSemiconductorMode()
+{
+    // reset estado interno
+}
+
 // Dispatcher: llama al modo específico
 void measureSemiconductorMode(SemiconductorSubMode submode)
 {

@@ -82,6 +82,7 @@ void loop()
         // Reset estados
         autoHold_reset();
         backlight_reset();
+        resetModeState(static_cast<MainMode>(currentModeIndex));
 
         // Submodo por defecto
         modes[currentModeIndex].currentSubModeId =

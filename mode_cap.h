@@ -4,6 +4,8 @@
 #include <Arduino.h>
 #include <stdbool.h>
 
+void resetCapMode();
+
 // Inicialización
 void mode_cap_init(void);
 

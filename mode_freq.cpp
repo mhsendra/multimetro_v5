@@ -9,6 +9,11 @@
 #include <Arduino.h>
 #include "mode_state.h"
 
+void resetFreqMode()
+{
+    // reset contadores internos
+}
+
 // =====================================================
 // LECTURA ANALÓGICA PARA FRECUENCIA
 // =====================================================

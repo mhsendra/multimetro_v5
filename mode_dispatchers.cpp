@@ -54,3 +54,44 @@ void dispatchMode(MainMode selectedMode)
         break;
     }
 }
+
+void resetModeState(MainMode mode)
+{
+    switch (mode)
+    {
+    case MODE_VDC:
+        resetVdcMode();
+        break;
+
+    case MODE_VAC:
+        resetVacMode();
+        break;
+
+    case MODE_CURRENT:
+        resetCurrentMode();
+        break;
+
+    case MODE_OHM:
+        resetOhmMode();
+        break;
+
+    case MODE_CAP:
+        resetCapMode();
+        break;
+
+    case MODE_FREQ:
+        resetFreqMode();
+        break;
+
+    case MODE_SEMICONDUCTOR:
+        resetSemiconductorMode();
+        break;
+
+    case MODE_INDUCT:
+        resetInductMode();
+        break;
+
+    default:
+        break;
+    }
+}

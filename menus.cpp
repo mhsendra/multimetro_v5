@@ -72,12 +72,12 @@ ModeTable inductTable = {"INDUCTANCE MENU", inductSubModes, sizeof(inductSubMode
 
 // ===================== TABLA GLOBAL DE MODOS =====================
 Mode modes[] = {
-    {"FREQ", &freqTable, FREQ_MAIN},
     {"VDC", &vdcTable, VDC_MAIN},
     {"VAC", &vacTable, VAC_MAIN},
     {"OHM", &ohmTable, OHM_MAIN},
-    {"DIODE", &diodeTable, SEMI_DIODE},
     {"CAP", &capTable, CAP_RANGE_UF},
+    {"FREQ", &freqTable, FREQ_MAIN},
+    {"SEMICONDUCTOR", &diodeTable, SEMI_DIODE},
     {"INDUCT", &inductTable, INDUCT_MAIN}};
 int numModes = sizeof(modes) / sizeof(modes[0]);
 

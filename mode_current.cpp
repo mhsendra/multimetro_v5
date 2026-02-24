@@ -11,6 +11,11 @@
 
 static float filterCurrentMeasured = -1e9f;
 
+void resetCurrentMode()
+{
+    filterCurrentMeasured = -1e9f;
+}
+
 // ------------------------------------------------------------
 // Medición RAW según shunt
 // ------------------------------------------------------------

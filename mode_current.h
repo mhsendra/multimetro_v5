@@ -10,6 +10,8 @@
 float measureCURRENT_RAW(void);
 float measureCURRENT_calibrated(void);
 
+void resetCurrentMode();
+
 void measureCURRENT(void);
 
 #endif // MODE_CURRENT_H

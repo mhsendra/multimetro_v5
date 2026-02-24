@@ -9,7 +9,7 @@
 
 static Butterworth2 bwVac;
 
-void enterVacMode()
+void resetVacMode()
 {
     bwVac.reset();
 }

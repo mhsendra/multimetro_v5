@@ -17,7 +17,12 @@
 // ===============================
 // Variables internas
 // ===============================
-static float filterOhm = NAN;
+static float filterOhm = -1e9f;
+
+void resetOhmMode()
+{
+    filterOhm = -1e9f;
+}
 
 // ===============================
 // Lectura RAW + calibración

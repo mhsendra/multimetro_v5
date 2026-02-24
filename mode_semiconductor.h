@@ -3,6 +3,8 @@
 
 #include "config.h"
 
+void resetSemiconductorMode();
+
 // Dispatcher principal del modo Semiconductor
 void measureSemiconductorMode(SemiconductorSubMode submode);
 

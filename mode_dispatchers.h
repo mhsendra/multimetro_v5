@@ -4,5 +4,6 @@
 #include "config.h"
 
 void dispatchMode(MainMode selectedMode);
+void resetModeState(MainMode mode);
 
 #endif
