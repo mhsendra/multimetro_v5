@@ -7,6 +7,8 @@
 #include "mode_zener.h"
 #include "mode_transistor.h"
 #include "mode_mosfet.h"
+#include "mode_cap.h"
+#include "induct.h"
 #include "diode_utils.h"
 #include "mode_freq.h"
 #include "lcd_ui.h"
@@ -42,18 +44,31 @@ ModeTable vacTable = {"VAC MENU", vacSubModes, sizeof(vacSubModes) / sizeof(vacS
 // OHM
 SubModeEntry ohmSubModes[] = {
     {OHM_MAIN, "1) R", measureOHM_Main},
-    {OHM_CONT, "2) Cont", measureOHM_Cont_Wrap},
-    {OHM_REL, "3) Rel", measureOHM_Rel_Wrap},
-    {OHM_CABLE, "5) Cable", measureOHM_Cable_Wrap}};
+    {OHM_CONT, "2) CONT", measureOHM_Cont_Wrap},
+    {OHM_REL, "3) REL", measureOHM_Rel_Wrap},
+    {OHM_CABLE, "4) CABLE", measureOHM_Cable_Wrap}};
 ModeTable ohmTable = {"OHM MENU", ohmSubModes, sizeof(ohmSubModes) / sizeof(ohmSubModes[0])};
-// DIODE
+
+// DIODE / SEMICONDUCTORES
 SubModeEntry semiconductorSubModes[] = {
     {SEMI_DIODE, "1) Diodo", measureDiode_Main},
     {SEMI_TRANSISTOR, "2) Trans", measureTRANSISTOR},
     {SEMI_MOSFET, "3) MOSFET", measureMosfetMode},
     {SEMI_ZENER, "4) Zener", measureZENER_MODE}};
-
 ModeTable diodeTable = {"DIODE MENU", semiconductorSubModes, sizeof(semiconductorSubModes) / sizeof(semiconductorSubModes[0])};
+
+// CAPACITANCIA
+SubModeEntry capSubModes[] = {
+    {CAP_RANGE_NF, "1) nF", measureCAPMode},
+    {CAP_RANGE_UF, "2) uF", measureCAPMode},
+    {CAP_RANGE_MF, "3) mF", measureCAPMode},
+    {CAP_ESR, "4) ESR", measureCAPMode}};
+ModeTable capTable = {"CAP MENU", capSubModes, sizeof(capSubModes) / sizeof(capSubModes[0])};
+
+// INDUCTANCIA
+SubModeEntry inductSubModes[] = {
+    {INDUCT_MAIN, "1) Inductance", measureInductanceMode}};
+ModeTable inductTable = {"INDUCTANCE MENU", inductSubModes, sizeof(inductSubModes) / sizeof(inductSubModes[0])};
 
 // ===================== TABLA GLOBAL DE MODOS =====================
 Mode modes[] = {
@@ -61,7 +76,9 @@ Mode modes[] = {
     {"VDC", &vdcTable, VDC_MAIN},
     {"VAC", &vacTable, VAC_MAIN},
     {"OHM", &ohmTable, OHM_MAIN},
-    {"DIODE", &diodeTable, SEMI_DIODE}};
+    {"DIODE", &diodeTable, SEMI_DIODE},
+    {"CAP", &capTable, CAP_RANGE_UF},
+    {"INDUCT", &inductTable, INDUCT_MAIN}};
 int numModes = sizeof(modes) / sizeof(modes[0]);
 
 // ===================== FUNCIONES AUXILIARES =====================
@@ -76,14 +93,13 @@ void showMenu(int modeIndex)
     lcd_ui_clear(&lcd);
     lcd_printAt(&lcd, 0, 0, table->title);
 
-    // Mostrar submodo activo
+    // Mostrar submodo activo y ejecutar función
     for (int i = 0; i < table->numSubModes; i++)
     {
         if (table->subModes[i].id == mode->currentSubModeId)
         {
             lcd_printAt(&lcd, 0, 1, table->subModes[i].displayName);
 
-            // Ejecutar función de medición
             if (table->subModes[i].measureFunc)
                 table->subModes[i].measureFunc();
 

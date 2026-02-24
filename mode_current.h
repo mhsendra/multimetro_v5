@@ -7,11 +7,9 @@
 // ------------------------------------------------------------
 // Funciones públicas
 // ------------------------------------------------------------
-float measureCurrent_Shunt_RAW(CurrentRange range);
 float measureCURRENT_RAW(void);
 float measureCURRENT_calibrated(void);
 
-void showCURRENT(void);
 void measureCURRENT(void);
 
 #endif // MODE_CURRENT_H

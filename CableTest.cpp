@@ -21,7 +21,7 @@ float measureCable()
     float mv = 0;
 
     // Seleccionamos automáticamente el rango OHM
-    ADC_RANGE_ID selectedRange = adc_manager_autorange(ADC_CH_SHUNT1, &mv);
+    adc_manager_autorange(ADC_CH_SHUNT1, &mv);
 
     // Convertimos a Ohmios (ejemplo: R = V / I_test, I_test depende del hardware)
     R = mv / 1000.0f; // Ajusta según tu conversión real

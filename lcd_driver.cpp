@@ -1,4 +1,5 @@
 #include "lcd_driver.h"
+#include <avr/pgmspace.h>
 
 void lcd_driver_init(LCD_Handle *handle, uint8_t addr, uint8_t cols, uint8_t rows)
 {
@@ -37,4 +38,20 @@ void lcd_driver_backlightOn(LCD_Handle *handle)
 void lcd_driver_backlightOff(LCD_Handle *handle)
 {
     handle->lcd->noBacklight();
+}
+void lcd_driver_printInt(LCD_Handle *handle, uint16_t value)
+{
+    char buf[6];
+    itoa(value, buf, 10);
+    lcd_driver_print(handle, buf);
+}
+void lcd_driver_print_P(LCD_Handle *handle, const char *progmem_s)
+{
+    char c;
+    // Leer cada byte desde PROGMEM hasta '\0'
+    while ((c = pgm_read_byte(progmem_s++)))
+    {
+        char str[2] = {c, 0}; // Convertimos a string de 1 caracter
+        lcd_driver_print(handle, str);
+    }
 }

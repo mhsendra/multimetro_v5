@@ -5,7 +5,11 @@
 #include <stdbool.h>
 #include "config.h" // Incluye los enums y constantes de hardware
 #include <Adafruit_ADS1X15.h>
+#include <math.h>
 
+uint16_t ads1115_readSingleEnded(uint8_t channel);
+float ads1115_readSingleEndedVolts(uint8_t channel);
+float measureADC_Single(enum ADC_CHANNEL_SINGLE ch);
 // =========================
 // Inicialización
 // =========================

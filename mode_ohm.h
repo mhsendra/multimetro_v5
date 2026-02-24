@@ -12,14 +12,6 @@ float measureOHM_Calibrated(void);
 float measureOHM_ForSubMode(void); // general para submodos si necesitas
 
 // =====================================================
-// Pantallas
-// =====================================================
-void showOHM_R(void);
-void showOHM_Cont(void);
-void showOHM_Rel(void);
-void showOHM_Cable(void);
-
-// =====================================================
 // Modo completo
 // =====================================================
 void measureOHM_MODE(OhmSubMode submode);

@@ -48,7 +48,7 @@ void showMosfet(void)
     autoHold_reset();
 
     lcd_ui_clear(&lcd);
-    lcd_driver_print(&lcd, "Detectando...");
+    lcd_driver_print_P(&lcd, PSTR("Detectando..."));
     delay(200);
 
     float vth = measureMosfet();
@@ -59,31 +59,31 @@ void showMosfet(void)
     {
         float held = autoHold_getHeldValue();
         lcd_ui_clear(&lcd);
-        lcd_driver_print(&lcd, "MOSFET (HOLD)");
+        lcd_driver_print_P(&lcd, PSTR("MOSFET (HOLD)"));
         lcd_ui_setCursor(&lcd, 0, 1);
 
         if (isnan(held))
         {
-            lcd_driver_print(&lcd, "OL");
+            lcd_driver_print_P(&lcd, PSTR("OL"));
             return;
         }
 
-        lcd_driver_print(&lcd, "Vth:");
+        lcd_driver_print_P(&lcd, PSTR("Vth:"));
         lcd_driver_printFloat(&lcd, held, 2);
-        lcd_driver_print(&lcd, "V");
+        lcd_driver_print_P(&lcd, PSTR("V"));
         return;
     }
 
     lcd_ui_clear(&lcd);
-    lcd_driver_print(&lcd, "MOSFET");
+    lcd_driver_print_P(&lcd, PSTR("MOSFET"));
     lcd_ui_setCursor(&lcd, 0, 1);
     if (isnan(vth))
-        lcd_driver_print(&lcd, "OL");
+        lcd_driver_print_P(&lcd, PSTR("OL"));
     else
     {
-        lcd_driver_print(&lcd, "Vth:");
+        lcd_driver_print_P(&lcd, PSTR("Vth:"));
         lcd_driver_printFloat(&lcd, vth, 2);
-        lcd_driver_print(&lcd, "V");
+        lcd_driver_print_P(&lcd, PSTR("V"));
     }
 }
 

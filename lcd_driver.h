@@ -20,5 +20,7 @@ void lcd_driver_printFloat(LCD_Handle *handle, float value, uint8_t decimals);
 void lcd_driver_setCursor(LCD_Handle *handle, uint8_t col, uint8_t row);
 void lcd_driver_backlightOn(LCD_Handle *handle);
 void lcd_driver_backlightOff(LCD_Handle *handle);
+void lcd_driver_printInt(LCD_Handle *handle, uint16_t value);
+void lcd_driver_print_P(LCD_Handle *handle, const char *progmem_s);
 
 #endif

@@ -65,7 +65,7 @@ float measureFrequency_calibrated()
     float f = measureFrequency_raw();
     if (f <= 0.0f)
         return 0.0f;
-    return f * cal.freq_factor;
+    return f * cal.freqFactor;
 }
 
 // =====================================================
@@ -151,9 +151,9 @@ void showFrequency()
         f = autoHold_getHeldValue();
 
     lcd_ui_clear(&lcd);
-    lcd_driver_print(&lcd, "FREQ:");
+    lcd_driver_print_P(&lcd, PSTR("FREQ:"));
     lcd_driver_printFloat(&lcd, f, 1);
-    lcd_driver_print(&lcd, " Hz");
+    lcd_driver_print_P(&lcd, PSTR(" Hz"));
 }
 
 void showDutyCycle()
@@ -163,9 +163,9 @@ void showDutyCycle()
         backlight_activity();
 
     lcd_ui_clear(&lcd);
-    lcd_driver_print(&lcd, "DUTY:");
+    lcd_driver_print_P(&lcd, PSTR("DUTY:"));
     lcd_driver_printFloat(&lcd, d, 1);
-    lcd_driver_print(&lcd, " %");
+    lcd_driver_print_P(&lcd, PSTR(" %"));
 }
 
 void showPulseWidth()
@@ -175,9 +175,9 @@ void showPulseWidth()
         backlight_activity();
 
     lcd_ui_clear(&lcd);
-    lcd_driver_print(&lcd, "PW:");
+    lcd_driver_print_P(&lcd, PSTR("PW:"));
     lcd_driver_printFloat(&lcd, pw, 1);
-    lcd_driver_print(&lcd, " us");
+    lcd_driver_print_P(&lcd, PSTR(" us"));
 }
 
 void showPeriod()
@@ -187,9 +187,9 @@ void showPeriod()
         backlight_activity();
 
     lcd_ui_clear(&lcd);
-    lcd_driver_print(&lcd, "PER:");
+    lcd_driver_print_P(&lcd, PSTR("PER:"));
     lcd_driver_printFloat(&lcd, p, 1);
-    lcd_driver_print(&lcd, " us");
+    lcd_driver_print_P(&lcd, PSTR(" us"));
 }
 
 // =====================================================

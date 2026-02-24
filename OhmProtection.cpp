@@ -13,7 +13,7 @@ bool detectVoltageOnOhm()
 
     // Selección automática de rango para el canal diferencial de OHM
     // IMPORTANTE: indicar el canal concreto a leer
-    ADC_RANGE_ID selectedRange = adc_manager_autorange(ADC_CH_SHUNT1, &mv);
+    adc_manager_autorange(ADC_CH_SHUNT1, &mv);
     // si quieres medir con otro shunt, usa ADC_CH_SHUNT2
 
     // Convertir a voltios

@@ -44,7 +44,6 @@ void ohm_select_range(OhmSubMode mode)
         break;
 
     case OHM_REL: // ejemplo 100kΩ
-    case OHM_MINMAX:
     case OHM_CABLE:
         digitalWrite(pin.SSR_HIGH, HIGH);
         break;

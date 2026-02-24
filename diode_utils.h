@@ -2,9 +2,9 @@
 #define DIODE_UTILS_H
 
 #include <Arduino.h>
+#include "config.h"
+#include "adcmanager.h"
 
-bool diodeConducts(uint8_t pinA, uint8_t pinB);
-// Devuelve 1, 2 o 3 según el pin TP
-uint8_t getTPNumber(uint8_t pin);
+bool diodeConducts(uint8_t pinAnode, uint8_t pinCathode);
 
 #endif

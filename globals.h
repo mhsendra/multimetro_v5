@@ -16,40 +16,25 @@ extern Pins pin;
 extern MCP_Pins mcpPin;
 
 // Medidas
-extern float vdcRef;
 extern float ohmRef;
 
 // LCD
 extern LCD_Handle lcd;
 
 // Filtros EMA
-extern float filter_vdc;
-extern float filter_current;
-extern float filter_ohm;
-extern float filter_continuity;
-extern float filter_alpha;
-
-// Filtros Butterworth
-extern Butterworth2 bw_vdc;
-extern Butterworth2 bw_vac;
-extern Butterworth2 bw_current;
+constexpr float FILTER_ALPHA = 0.1f;
 
 // Estado expanders
-extern uint8_t pcf_state;
+extern uint8_t pcfState;
 
 // Objetos hardware globales
 extern Adafruit_MCP23X17 mcp23017;
 
 extern IOExpander *ioExpander;
 
-// VAC RMS
-extern float vac_rms_accum;
-extern float vac_rms_alpha;
-
 // VDC ranges
-extern float vdc_ranges[3];
-extern int vdc_range;
-extern float acsOffset;
+extern float vdcRanges[3];
+extern int vdcRange;
 
 // Cable test
 extern bool cableOK;
@@ -62,10 +47,11 @@ extern unsigned long lastBacklightActivity;
 extern bool backlightOff;
 
 // ADC
-extern Adafruit_ADS1115 ads;
-extern uint16_t ads_mux;
-extern uint16_t ads_gain;
-extern uint16_t ads_sps;
+
+extern ADC_CHANNEL_DIFF ads_mux;
+
+extern uint16_t adsGain;
+extern uint16_t adsSps;
 
 extern Calibration cal;
 
@@ -74,17 +60,17 @@ extern const float SHUNT_16A_LIMIT;
 extern const float SHUNT1_MAX_CURRENT;
 extern const float SHUNT2_MAX_CURRENT;
 
-extern ADC_RANGE_ID currentOhmRange;
+extern ADC_RANGE_ID ohmActiveRange;
 extern CurrentRange currentRange;
 
 // Estados iniciales
 #define MAIN_MODE_OFF 0
 #define DIODE_SUBMODE_NONE 0
-#define CAP_SUBMODE_NONE 0
+/*#define CAP_SUBMODE_NONE 0
 #define FREQ_SUBMODE_NONE 0
 #define OHM_SUBMODE_NONE 0
 #define VDC_SUBMODE_NONE 0
-#define VAC_SUBMODE_NONE 0
+#define VAC_SUBMODE_NONE 0*/
 
 // Rangos
 #define OHM_RANGE_AUTO 0

@@ -1,5 +1,8 @@
+// ===============================
+// mode_ohm.cpp
+// ===============================
+
 #include "mode_ohm.h"
-#include "config.h"
 #include "globals.h"
 #include "adcmanager.h"
 #include "lcd_ui.h"
@@ -10,13 +13,11 @@
 #include "filters.h"
 #include <math.h>
 #include "measurement.h"
-#include "config.h"
 
 // ===============================
 // Variables internas
 // ===============================
-static float filter_ohm = NAN;
-static float ohm_reference = NAN;
+static float filterOhm = NAN;
 
 // ===============================
 // Lectura RAW + calibración
@@ -49,9 +50,9 @@ static float measureOHM_calibrated(ADC_RANGE_ID range)
         return R;
 
     R *= cal.ohm; // factor de calibración
-    filter_ohm = applyEMA(R, filter_ohm, filter_alpha);
+    filterOhm = applyEMA(R, filterOhm, FILTER_ALPHA);
 
-    return filter_ohm;
+    return filterOhm;
 }
 
 // ===============================
@@ -82,7 +83,7 @@ static ADC_RANGE_ID ohm_autorange(float R, ADC_RANGE_ID current)
 }
 
 // ===============================
-// Funciones de pantalla
+// Símbolo de rango
 // ===============================
 static const char *getOhmRangeSymbol(ADC_RANGE_ID range)
 {
@@ -99,24 +100,27 @@ static const char *getOhmRangeSymbol(ADC_RANGE_ID range)
     }
 }
 
-void showOHM_R(void)
+// ===============================
+// Funciones de pantalla
+// ===============================
+static void showOHM_R(void)
 {
-    float R = measureOHM_calibrated(currentOhmRange);
-    currentOhmRange = ohm_autorange(R, currentOhmRange);
+    float R = measureOHM_calibrated(ohmActiveRange);
+    ohmActiveRange = ohm_autorange(R, ohmActiveRange);
 
     if (autoHold_update(R))
         R = autoHold_getHeldValue();
 
     lcd_ui_clear(&lcd);
     lcd_driver_printFloat(&lcd, R, 1);
-    lcd_driver_print(&lcd, " Ohm ");
-    lcd_driver_print(&lcd, getOhmRangeSymbol(currentOhmRange));
+    lcd_driver_print_P(&lcd, PSTR(" Ohm "));
+    lcd_driver_print(&lcd, getOhmRangeSymbol(ohmActiveRange));
 }
 
-void showOHM_Cont(void)
+static void showOHM_Cont(void)
 {
-    float R = measureOHM_calibrated(currentOhmRange);
-    currentOhmRange = ohm_autorange(R, currentOhmRange);
+    float R = measureOHM_calibrated(ohmActiveRange);
+    ohmActiveRange = ohm_autorange(R, ohmActiveRange);
 
     static bool beepState = false;
     if (R < OHM_CONT_THRESHOLD - 2.0f)
@@ -127,22 +131,22 @@ void showOHM_Cont(void)
     lcd_ui_clear(&lcd);
     if (beepState)
     {
-        lcd_driver_print(&lcd, "BEEP ");
+        lcd_driver_print_P(&lcd, PSTR("BEEP "));
         tone(pin.PIN_BUZZER, 4000);
     }
     else
     {
-        lcd_driver_print(&lcd, "---- ");
+        lcd_driver_print_P(&lcd, PSTR("---- "));
         noTone(pin.PIN_BUZZER);
     }
 
-    lcd_driver_print(&lcd, getOhmRangeSymbol(currentOhmRange));
+    lcd_driver_print(&lcd, getOhmRangeSymbol(ohmActiveRange));
 }
 
-void showOHM_Rel(void)
+static void showOHM_Rel(void)
 {
-    float R = measureOHM_calibrated(currentOhmRange);
-    currentOhmRange = ohm_autorange(R, currentOhmRange);
+    float R = measureOHM_calibrated(ohmActiveRange);
+    ohmActiveRange = ohm_autorange(R, ohmActiveRange);
 
     static float relRef = NAN;
     if (isnan(relRef))
@@ -153,24 +157,32 @@ void showOHM_Rel(void)
         diff = autoHold_getHeldValue();
 
     lcd_ui_clear(&lcd);
-    lcd_driver_print(&lcd, "REL ");
+    lcd_driver_print_P(&lcd, PSTR("REL "));
     lcd_driver_printFloat(&lcd, diff, 1);
-    lcd_driver_print(&lcd, " ");
-    lcd_driver_print(&lcd, getOhmRangeSymbol(currentOhmRange));
+    lcd_driver_print_P(&lcd, PSTR(" "));
+    lcd_driver_print(&lcd, getOhmRangeSymbol(ohmActiveRange));
 }
 
-void showOHM_Cable(void)
+static void showOHM_Cable(void)
 {
-    float R = measureOHM_calibrated(currentOhmRange);
-    currentOhmRange = ohm_autorange(R, currentOhmRange);
+    float R = measureOHM_calibrated(ohmActiveRange);
+    ohmActiveRange = ohm_autorange(R, ohmActiveRange);
 
     lcd_ui_clear(&lcd);
     if (R < 2.0f)
-        lcd_driver_print(&lcd, "CABLE OK ");
+        lcd_driver_print_P(&lcd, PSTR("CABLE OK "));
     else
-        lcd_driver_print(&lcd, "NO CABLE ");
-    lcd_driver_print(&lcd, getOhmRangeSymbol(currentOhmRange));
+        lcd_driver_print_P(&lcd, PSTR("NO CABLE "));
+    lcd_driver_print(&lcd, getOhmRangeSymbol(ohmActiveRange));
 }
+
+// ===============================
+// Wrappers para punteros a función
+// ===============================
+void measureOHM_Main(void) { measureOHM_MODE(OHM_MAIN); }
+void measureOHM_Cont_Wrap(void) { measureOHM_MODE(OHM_CONT); }
+void measureOHM_Rel_Wrap(void) { measureOHM_MODE(OHM_REL); }
+void measureOHM_Cable_Wrap(void) { measureOHM_MODE(OHM_CABLE); }
 
 // ===============================
 // Modo completo por submodo
@@ -194,13 +206,7 @@ void measureOHM_MODE(OhmSubMode submode)
     case OHM_CABLE:
         showOHM_Cable();
         break;
+    default:
+        break;
     }
 }
-
-// ===============================
-// Wrappers para menú
-// ===============================
-void measureOHM_Main(void) { showOHM_R(); }
-void measureOHM_Cont_Wrap(void) { showOHM_Cont(); }
-void measureOHM_Rel_Wrap(void) { showOHM_Rel(); }
-void measureOHM_Cable_Wrap(void) { showOHM_Cable(); }

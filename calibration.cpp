@@ -28,8 +28,8 @@ void loadCalibration()
         cal.vac = 1.0;
         cal.ohm = 1.0;
 
-        cal.curr_shunt_gain = 1.0;
-        cal.curr_shunt_offset = 0.0;
+        cal.currShuntGain = 1.0;
+        cal.currShuntOffset = 0.0;
     }
 }
 
@@ -61,9 +61,9 @@ void calibrateVDC()
 {
     lcd_ui_clear(&lcd);
     lcd_ui_setCursor(&lcd, 0, 0);
-    lcd_driver_print(&lcd, "VDC: aplicar 5.00V");
+    lcd_driver_print_P(&lcd, PSTR("VDC: aplicar 5.00V"));
     lcd_ui_setCursor(&lcd, 0, 1);
-    lcd_driver_print(&lcd, "OK=CAL");
+    lcd_driver_print_P(&lcd, PSTR("OK=CAL"));
 
     while (digitalRead(pin.PIN_CAL) == HIGH)
         ;
@@ -77,9 +77,9 @@ void calibrateVAC()
 {
     lcd_ui_clear(&lcd);
     lcd_ui_setCursor(&lcd, 0, 0);
-    lcd_driver_print(&lcd, "VAC: aplicar 230V");
+    lcd_driver_print_P(&lcd, PSTR("VAC: aplicar 230V"));
     lcd_ui_setCursor(&lcd, 0, 1);
-    lcd_driver_print(&lcd, "OK=CAL");
+    lcd_driver_print_P(&lcd, PSTR("OK=CAL"));
 
     while (digitalRead(pin.PIN_CAL) == HIGH)
         ;
@@ -94,9 +94,9 @@ void calibrateOHM()
 {
     lcd_ui_clear(&lcd);
     lcd_ui_setCursor(&lcd, 0, 0);
-    lcd_driver_print(&lcd, "OHM: conectar 1k");
+    lcd_driver_print_P(&lcd, PSTR("OHM: conectar 1k"));
     lcd_ui_setCursor(&lcd, 0, 1);
-    lcd_driver_print(&lcd, "OK=CAL");
+    lcd_driver_print_P(&lcd, PSTR("OK=CAL"));
 
     while (digitalRead(pin.PIN_CAL) == HIGH)
         ;
@@ -113,44 +113,44 @@ void calibrateCurrent_mA()
 {
     lcd_ui_clear(&lcd);
     lcd_ui_setCursor(&lcd, 0, 0);
-    lcd_driver_print(&lcd, "I mA: 0mA");
+    lcd_driver_print_P(&lcd, PSTR("I mA: 0mA"));
     lcd_ui_setCursor(&lcd, 0, 1);
-    lcd_driver_print(&lcd, "OK=CAL");
+    lcd_driver_print_P(&lcd, PSTR("OK=CAL"));
 
     while (digitalRead(pin.PIN_CAL) == HIGH)
         ;
     delay(300);
 
-    cal.curr_shunt_offset = measureCURRENT_RAW();
+    cal.currShuntOffset = measureCURRENT_RAW();
 
     lcd_ui_clear(&lcd);
     lcd_ui_setCursor(&lcd, 0, 0);
-    lcd_driver_print(&lcd, "I mA: 100mA");
+    lcd_driver_print_P(&lcd, PSTR("I mA: 100mA"));
     lcd_ui_setCursor(&lcd, 0, 1);
-    lcd_driver_print(&lcd, "OK=CAL");
+    lcd_driver_print_P(&lcd, PSTR("OK=CAL"));
 
     while (digitalRead(pin.PIN_CAL) == HIGH)
         ;
     delay(300);
 
     float v_load = measureCURRENT_RAW();
-    cal.curr_shunt_gain = 0.100 / (v_load - cal.curr_shunt_offset);
+    cal.currShuntGain = 0.100 / (v_load - cal.currShuntOffset);
 }
 
 void calibrateCurrent_5A()
 {
     lcd_ui_clear(&lcd);
     lcd_ui_setCursor(&lcd, 0, 0);
-    lcd_driver_print(&lcd, "I 5A: aplicar 5A");
+    lcd_driver_print_P(&lcd, PSTR("I 5A: aplicar 5A"));
     lcd_ui_setCursor(&lcd, 0, 1);
-    lcd_driver_print(&lcd, "OK=CAL");
+    lcd_driver_print_P(&lcd, PSTR("OK=CAL"));
 
     while (digitalRead(pin.PIN_CAL) == HIGH)
         ;
     delay(300);
 
     float v_load = measureCURRENT_RAW();
-    cal.curr_shunt_gain = 5.0 / (v_load - cal.curr_shunt_offset);
+    cal.currShuntGain = 5.0 / (v_load - cal.currShuntOffset);
 }
 
 // =====================================================
@@ -162,9 +162,9 @@ void calibrateESR()
 {
     lcd_ui_clear(&lcd);
     lcd_ui_setCursor(&lcd, 0, 0);
-    lcd_driver_print(&lcd, "ESR: corto");
+    lcd_driver_print_P(&lcd, PSTR("ESR: corto"));
     lcd_ui_setCursor(&lcd, 0, 1);
-    lcd_driver_print(&lcd, "OK=CAL");
+    lcd_driver_print_P(&lcd, PSTR("OK=CAL"));
 
     while (digitalRead(pin.PIN_CAL) == HIGH)
         ;
@@ -174,16 +174,16 @@ void calibrateESR()
     if (i0 < 0.00001f)
         i0 = 0.00001f;
 
-    cal.esr_factor = 5.0 / i0;
+    cal.esrFactor = 5.0 / i0;
 }
 
 void calibrateFrequency()
 {
     lcd_ui_clear(&lcd);
     lcd_ui_setCursor(&lcd, 0, 0);
-    lcd_driver_print(&lcd, "FREQ: 1kHz");
+    lcd_driver_print_P(&lcd, PSTR("FREQ: 1kHz"));
     lcd_ui_setCursor(&lcd, 0, 1);
-    lcd_driver_print(&lcd, "OK=CAL");
+    lcd_driver_print_P(&lcd, PSTR("OK=CAL"));
 
     while (digitalRead(pin.PIN_CAL) == HIGH)
         ;
@@ -193,16 +193,16 @@ void calibrateFrequency()
     if (f_meas < 1)
         f_meas = 1;
 
-    cal.freq_factor = 1000.0 / f_meas;
+    cal.freqFactor = 1000.0 / f_meas;
 }
 
 void calibrateInductance()
 {
     lcd_ui_clear(&lcd);
     lcd_ui_setCursor(&lcd, 0, 0);
-    lcd_driver_print(&lcd, "IND: 1mH");
+    lcd_driver_print_P(&lcd, PSTR("IND: 1mH"));
     lcd_ui_setCursor(&lcd, 0, 1);
-    lcd_driver_print(&lcd, "OK=CAL");
+    lcd_driver_print_P(&lcd, PSTR("OK=CAL"));
 
     while (digitalRead(pin.PIN_CAL) == HIGH)
         ;
@@ -212,7 +212,7 @@ void calibrateInductance()
     if (L_meas < 0.000001f)
         L_meas = 0.000001f;
 
-    cal.induct_factor = 0.001 / L_meas;
+    cal.inductFactor = 0.001 / L_meas;
 }
 
 // =====================================================
@@ -221,14 +221,14 @@ void calibrateInductance()
 void enterCalibration()
 {
     lcd_ui_clear(&lcd);
-    lcd_driver_print(&lcd, "CALIBRACION");
+    lcd_driver_print_P(&lcd, PSTR("CALIBRACION"));
     delay(1500);
 
     lcd_ui_clear(&lcd);
     lcd_ui_setCursor(&lcd, 0, 0);
-    lcd_driver_print(&lcd, "1) Desconectar entradas");
+    lcd_driver_print_P(&lcd, PSTR("1) Desconectar entradas"));
     lcd_ui_setCursor(&lcd, 0, 1);
-    lcd_driver_print(&lcd, "OK=CAL");
+    lcd_driver_print_P(&lcd, PSTR("OK=CAL"));
 
     while (digitalRead(pin.PIN_CAL) == HIGH)
         ;
@@ -249,6 +249,6 @@ void enterCalibration()
     EEPROM.put(0, cal);
 
     lcd_ui_clear(&lcd);
-    lcd_driver_print(&lcd, "CAL COMPLETA");
+    lcd_driver_print_P(&lcd, PSTR("CAL COMPLETA"));
     delay(2000);
 }

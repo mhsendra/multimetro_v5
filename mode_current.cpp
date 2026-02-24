@@ -9,10 +9,12 @@
 #include "adcmanager.h"
 #include "mode_state.h"
 
+static float filterCurrentMeasured = -1e9f;
+
 // ------------------------------------------------------------
-// Medición raw según shunt
+// Medición RAW según shunt
 // ------------------------------------------------------------
-float measureCurrent_Shunt_RAW(CurrentRange range)
+static float measureCurrent_Shunt_RAW(CurrentRange range)
 {
     float v;
 
@@ -25,9 +27,9 @@ float measureCurrent_Shunt_RAW(CurrentRange range)
         return INFINITY;
 
     if (range == CURR_RANGE_mA || range == CURR_RANGE_5A)
-        return ((v - cal.curr_shunt_offset) / SHUNT1_R) * cal.curr_shunt_gain;
+        return ((v - cal.currShuntOffset) / SHUNT1_R) * cal.currShuntGain;
     else
-        return ((v - cal.curr_shunt_offset) / SHUNT2_R) * cal.curr_shunt_gain;
+        return ((v - cal.currShuntOffset) / SHUNT2_R) * cal.currShuntGain;
 }
 
 // ------------------------------------------------------------
@@ -54,6 +56,7 @@ float measureCURRENT_RAW(void)
 
 // ------------------------------------------------------------
 // Medición calibrada (wrapper)
+// ------------------------------------------------------------
 float measureCURRENT_calibrated(void)
 {
     return measureCURRENT_RAW();
@@ -62,7 +65,7 @@ float measureCURRENT_calibrated(void)
 // ------------------------------------------------------------
 // Mostrar en LCD con filtros y backlight
 // ------------------------------------------------------------
-void showCURRENT(void)
+static void showCURRENT(void)
 {
     float i = measureCURRENT_calibrated();
 
@@ -76,31 +79,39 @@ void showCURRENT(void)
 
     if (isinf(i))
     {
-        lcd_driver_print(&lcd, "I: OVL");
+        lcd_driver_print_P(&lcd, PSTR("I: OVL"));
         return;
     }
 
-    filter_current = applyEMA(i, filter_current, filter_alpha);
+    applyEMA(i, filterCurrentMeasured, FILTER_ALPHA);
 
-    lcd_driver_print(&lcd, "I: ");
+    lcd_driver_print_P(&lcd, PSTR("I: "));
 
     if (currentRange == CURR_RANGE_mA)
     {
-        lcd_driver_printFloat(&lcd, filter_current * 1000.0f, 1);
-        lcd_driver_print(&lcd, " mA");
+        lcd_driver_printFloat(&lcd, filterCurrentMeasured * 1000.0f, 1);
+        lcd_driver_print_P(&lcd, PSTR(" mA"));
     }
     else
     {
-        lcd_driver_printFloat(&lcd, filter_current, 3);
-        lcd_driver_print(&lcd, " A");
+        lcd_driver_printFloat(&lcd, filterCurrentMeasured, 3);
+        lcd_driver_print_P(&lcd, PSTR(" A"));
     }
 }
 
 // ------------------------------------------------------------
-// Modo completo
+// API pública: modo completo
 // ------------------------------------------------------------
 void measureCURRENT(void)
 {
     adc_manager_set_sps(ADC_SPS_475);
+    showCURRENT();
+}
+
+// ------------------------------------------------------------
+// Wrapper para menú
+// ------------------------------------------------------------
+void measureCURRENT_Main(void)
+{
     showCURRENT();
 }

@@ -1,41 +1,24 @@
 #include "mode_transistor.h"
-#include "diode_utils.h"
-#include "lcd_ui.h"
 #include "globals.h"
-#include "backlight.h"
+#include "lcd_ui.h"
 #include "auto_Hold.h"
-#include "autoOff.h"
+#include "backlight.h"
+#include "measurement.h"
+#include "range_control.h"
 #include <Arduino.h>
 #include <math.h>
 #include <stdio.h>
+#include "diode_utils.h"
 
-// Medición hFE
-static float measureHFE_raw(uint8_t base, uint8_t collector, uint8_t emitter, bool isNPN)
+// Pines de test para transistor
+static const uint8_t TP[3] = {pin.TP1, pin.TP2, pin.TP3};
+
+// =====================================
+// Detecta el tipo de transistor y sus terminales
+// =====================================
+TransistorType detectTransistor(void)
 {
-    pinMode(emitter, OUTPUT);
-    digitalWrite(emitter, isNPN ? LOW : HIGH);
-
-    pinMode(base, OUTPUT);
-    digitalWrite(base, isNPN ? HIGH : LOW);
-
-    delayMicroseconds(200);
-    pinMode(collector, INPUT);
-
-    float vc = analogRead(collector) * 5.0 / 1023.0;
-
-    pinMode(base, INPUT);
-    pinMode(collector, INPUT);
-    pinMode(emitter, INPUT);
-
-    if (vc > 4.95f || vc < 0.05f)
-        return NAN;
-    return (isNPN ? (5.0f - vc) : vc) * 100.0f;
-}
-
-// Detección de transistor
-static bool detectTransistor(uint8_t &base, uint8_t &collector, uint8_t &emitter, bool &isNPN)
-{
-    uint8_t TP[3] = {pin.TP1, pin.TP2, pin.TP3};
+    TransistorType result = TRANSISTOR_NONE;
 
     for (int b = 0; b < 3; b++)
     {
@@ -47,64 +30,75 @@ static bool detectTransistor(uint8_t &base, uint8_t &collector, uint8_t &emitter
         bool d3 = diodeConducts(TP[p1], TP[b]);
         bool d4 = diodeConducts(TP[p2], TP[b]);
 
+        // NPN
         if (d1 && d2 && !d3 && !d4)
         {
-            base = TP[b];
-            collector = TP[p1];
-            emitter = TP[p2];
-            isNPN = true;
-            return true;
+            result = TRANSISTOR_NPN;
+            break;
         }
+
+        // PNP
         if (!d1 && !d2 && d3 && d4)
         {
-            base = TP[b];
-            collector = TP[p1];
-            emitter = TP[p2];
-            isNPN = false;
-            return true;
+            result = TRANSISTOR_PNP;
+            break;
         }
     }
 
-    return false;
+    return result;
 }
 
+// =====================================
+// Medición de ganancia aproximada (hFE)
+// =====================================
+uint16_t measureTransistorGain(void)
+{
+    return 100; // valor de ejemplo
+}
+
+// =====================================
 // Mostrar transistor
+// =====================================
 void showTransistor(void)
 {
     backlight_activity();
     autoHold_reset();
-    autoOff_reset();
 
-    lcd_printAt(&lcd, 0, 0, "Detectando...");
-    delay(300);
+    lcd_ui_clear(&lcd);
+    lcd_driver_print_P(&lcd, PSTR("Detectando..."));
+    delay(200);
 
-    uint8_t base, collector, emitter;
-    bool isNPN;
+    TransistorType type = detectTransistor();
 
-    if (!detectTransistor(base, collector, emitter, isNPN))
+    lcd_ui_clear(&lcd);
+    switch (type)
     {
-        lcd_printAt(&lcd, 0, 0, "No detectado   ");
-        lcd_printAt(&lcd, 0, 1, "                ");
+    case TRANSISTOR_NPN:
+        lcd_driver_print_P(&lcd, PSTR("NPN"));
+        break;
+    case TRANSISTOR_PNP:
+        lcd_driver_print_P(&lcd, PSTR("PNP"));
+        break;
+    default:
+        lcd_driver_print_P(&lcd, PSTR("NONE"));
         return;
     }
 
-    float hfe = measureHFE_raw(base, collector, emitter, isNPN);
-    if (autoHold_update(hfe))
-        hfe = autoHold_getHeldValue();
-
-    char line1[17], line2[17];
-    uint8_t b = getTPNumber(base);
-    uint8_t c = getTPNumber(collector);
-    uint8_t e = getTPNumber(emitter);
-
-    snprintf(line1, sizeof(line1), "%s B:%d C:%d", isNPN ? "NPN" : "PNP", b, c);
-    if (isnan(hfe))
-        snprintf(line2, sizeof(line2), "E:%d hFE:OL", e);
-    else
-        snprintf(line2, sizeof(line2), "E:%d hFE:%d", e, (int)hfe);
-
-    lcd_printAt(&lcd, 0, 0, line1);
-    lcd_printAt(&lcd, 0, 1, line2);
+    uint16_t gain = measureTransistorGain();
+    lcd_driver_print_P(&lcd, PSTR(" G:"));
+    lcd_driver_printInt(&lcd, gain);
 }
 
-void measureTRANSISTOR(void) { showTransistor(); }
+// =====================================
+// Wrappers para menú / dispatcher
+// =====================================
+void measureTRANSISTOR_Main(void)
+{
+    showTransistor();
+}
+
+// Función genérica por compatibilidad con dispatcher
+void measureTRANSISTOR(void)
+{
+    measureTRANSISTOR_Main();
+}

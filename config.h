@@ -19,8 +19,10 @@ enum ADC_CHANNEL_DIFF
 // =========================
 enum ADC_CHANNEL_SINGLE
 {
-    ADC_CH_ZENER = 0, // AIN0
-
+    ADC_CH_ZENER = 0,   // AIN0
+    ADC_CH_VOLTAGE = 1, // AIN1 – Voltaje general
+    ADC_CH_OHM = 2,     // AIN2 – Para medir resistencias con fuente controlada
+    ADC_CH_NCV = 3      // AIN3 – Non-contact voltage virtual pin
 };
 
 // =========================
@@ -112,7 +114,6 @@ enum OhmSubMode
     OHM_MAIN,
     OHM_CONT,
     OHM_REL,
-    OHM_MINMAX,
     OHM_CABLE
 };
 
@@ -130,6 +131,24 @@ enum SemiconductorSubMode
     SEMI_TRANSISTOR,
     SEMI_MOSFET,
     SEMI_ZENER,
+};
+
+enum DiodeSubMode
+{
+    DIODE_MAIN, // medición típica de forward voltage
+    DIODE_REV,  // polarización inversa (si aplica)
+    DIODE_ZENER // para zeners > 4.3 V usando ADC_CH_ZENER
+};
+
+enum TransistorType
+{
+    TRANSISTOR_NONE = 0, // No detectado o N/A
+    TRANSISTOR_NPN,      // NPN
+    TRANSISTOR_PNP       // PNP
+};
+enum InductSubMode
+{
+    INDUCT_MAIN // único submodo de inductancia
 };
 
 // =====================================================
@@ -187,7 +206,7 @@ enum SemiconductorSubMode
 
 // Direcciones I2C
 #define I2C_ADDR_MCP23017 0x20
-#define I2C_ADDR_LCD 0x27
+#define I2C_ADDR_LCD 0x3E
 
 #define LCD_COLS 16
 #define LCD_ROWS 2
@@ -213,12 +232,12 @@ struct Calibration
     float vdc;
     float vac;
     float ohm;
-    float curr_shunt_gain;
-    float curr_shunt_offset;
-    float esr_factor;
-    float zener_factor;
-    float freq_factor;
-    float induct_factor;
+    float currShuntGain;
+    float currShuntOffset;
+    float esrFactor;
+    float zenerFactor;
+    float freqFactor;
+    float inductFactor;
 };
 
 // -------------------- TABLA DE SUBMODOS --------------------

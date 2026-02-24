@@ -1,6 +1,14 @@
 #include "adcmanager.h"
 #include "globals.h"
 #include <Adafruit_ADS1X15.h>
+#include <Wire.h>
+#include "config.h"
+#include <math.h>
+
+#define ADS1115_ADDR 0x48 // dirección I2C por defecto
+
+adsGain_t gain = GAIN_ONE; // valor inicial
+ADC_RANGE_ID selected = RANGE_HIGH;
 
 // =========================
 // Instancia ADS1115
@@ -12,9 +20,34 @@ static Adafruit_ADS1115 ads;
 // =========================
 static enum ADC_SPS current_sps = ADC_SPS_250;
 
-// =========================
-// Helpers internos
-// =========================
+float measureADC_Single(ADC_CHANNEL_SINGLE ch)
+{
+    int16_t raw = 0;
+
+    switch (ch)
+    {
+    case ADC_CH_ZENER:
+        raw = ads.readADC_SingleEnded(0);
+        break;
+
+    case ADC_CH_VOLTAGE:
+        raw = ads.readADC_SingleEnded(1);
+        break;
+
+    case ADC_CH_OHM:
+        raw = ads.readADC_SingleEnded(2);
+        break;
+
+    case ADC_CH_NCV:
+        raw = ads.readADC_SingleEnded(3);
+        break;
+
+    default:
+        return NAN;
+    }
+
+    return ads.computeVolts(raw);
+}
 
 // Configura la velocidad de muestreo
 static void apply_sps(void)
@@ -70,16 +103,16 @@ static adsGain_t gain_for_range(ADC_RANGE_ID range)
 
 void adc_manager_init(void)
 {
+    Wire.begin();
     ads.begin();
+    ads.setGain(GAIN_ONE);
     current_sps = ADC_SPS_250;
     apply_sps();
 }
 
-// Autorango automático simple
 ADC_RANGE_ID adc_manager_autorange(enum ADC_CHANNEL_DIFF channel, float *mv_out)
 {
     int16_t raw = 0;
-    adsGain_t gain = GAIN_ONE;
     ADC_RANGE_ID selected = RANGE_HIGH;
 
     // Lectura preliminar en rango alto
@@ -92,25 +125,41 @@ ADC_RANGE_ID adc_manager_autorange(enum ADC_CHANNEL_DIFF channel, float *mv_out)
 
     float mv = ads.computeVolts(raw) * 1000.0f;
 
-    // Selección de rango basado en mV
-    if (mv < 200.0f)
+    // Selección de rango basado en mV y shunt
+    if (channel == ADC_CH_SHUNT1) // mA
     {
-        gain = GAIN_SIXTEEN;
-        selected = RANGE_LOW;
+        if (mv < 20.0f)
+        {
+            gain = GAIN_SIXTEEN;
+            selected = RANGE_LOW;
+        }
+        else
+        {
+            gain = GAIN_EIGHT;
+            selected = RANGE_MEDIUM;
+        }
     }
-    else if (mv < 500.0f)
+    else // A
     {
-        gain = GAIN_EIGHT;
-        selected = RANGE_MEDIUM;
-    }
-    else
-    {
-        gain = GAIN_ONE;
-        selected = RANGE_HIGH;
+        if (mv < 165.0f)
+        {
+            gain = GAIN_EIGHT;
+            selected = RANGE_MEDIUM;
+        }
+        else
+        {
+            gain = GAIN_ONE;
+            selected = RANGE_HIGH;
+        }
     }
 
-    // Aplicar gain final
-    ads.setGain(gain);
+    // Aplicar gain final y descartar primera lectura
+    ads.setGain(gain_for_range(selected));
+    if (channel == ADC_CH_SHUNT1)
+        ads.readADC_Differential_0_1();
+    else
+        ads.readADC_Differential_2_3();
+    delay(1); // opcional
 
     // Lectura definitiva
     if (channel == ADC_CH_SHUNT1)

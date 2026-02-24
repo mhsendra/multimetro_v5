@@ -7,37 +7,49 @@
 #include <math.h>
 #include "config.h"
 
-// ===============================
-// Variables internas
-// ===============================
-static float filter_vac = NAN;
-static float vac_reference = NAN;
+static Butterworth2 bwVac;
 
-// ===============================
-// Medición
-// ===============================
-float measureVAC_RMS(void)
+void enterVacMode()
 {
-    // En tu código actual, measureVAC_Relative() devuelve la medición de RMS
-    return measureVAC_Relative();
+    bwVac.reset();
 }
 
-float measureVAC_Relative(void)
+// Canal ADC a usar para VAC
+#define ADC_CHANNEL_FOR_VAC ADC_CH_VOLTAGE
+
+// ===============================
+// Lectura RMS
+// ===============================
+static float measureVAC_RMS_raw()
 {
-    // Misma función que antes, devuelve RMS relativo
+    // Leer el ADC correspondiente
+    float v = measureADC_Single(ADC_CHANNEL_FOR_VAC);
+    return v;
+}
+
+// ===============================
+// Lectura VAC relativa
+// ===============================
+static float measureVAC_relative()
+{
     static float ref = NAN;
-    float v = measureVAC_Relative(); // tu función existente
+    float v = measureVAC_RMS_raw();
+
     if (isnan(ref))
         ref = v;
+
     return v - ref;
 }
 
 // ===============================
 // Pantallas
 // ===============================
-void showVAC(void)
+static void showVAC(void)
 {
-    float v = measureVAC_RMS();
+    backlight_activity();
+    autoHold_reset();
+
+    float v = measureVAC_RMS_raw();
     if (autoHold_update(v))
         v = autoHold_getHeldValue();
 
@@ -45,44 +57,50 @@ void showVAC(void)
 
     if (isinf(v))
     {
-        lcd_driver_print(&lcd, "VAC: OVL");
+        lcd_driver_print_P(&lcd, PSTR("VAC: OVL"));
         return;
     }
 
-    lcd_driver_print(&lcd, "VAC: ");
-    if (use_millivolts(v))
+    lcd_driver_print_P(&lcd, PSTR("VAC: "));
+    if (use_millivolts(fabs(v)))
     {
         lcd_driver_printFloat(&lcd, v * 1000.0f, 1);
-        lcd_driver_print(&lcd, " mV");
+        lcd_driver_print_P(&lcd, PSTR(" mV"));
     }
     else
     {
         lcd_driver_printFloat(&lcd, v, 3);
-        lcd_driver_print(&lcd, " V");
+        lcd_driver_print_P(&lcd, PSTR(" V"));
     }
 }
 
-void showVAC_Relative(void)
+static void showVAC_Relative(void)
 {
-    float v = measureVAC_Relative();
+    backlight_activity();
+    autoHold_reset();
+
+    float v = measureVAC_relative();
+    if (autoHold_update(v))
+        v = autoHold_getHeldValue();
+
     lcd_ui_clear(&lcd);
 
     if (isinf(v))
     {
-        lcd_driver_print(&lcd, "REL: OVL");
+        lcd_driver_print_P(&lcd, PSTR("REL: OVL"));
         return;
     }
 
-    lcd_driver_print(&lcd, "REL: ");
+    lcd_driver_print_P(&lcd, PSTR("REL: "));
     if (use_millivolts(fabs(v)))
     {
         lcd_driver_printFloat(&lcd, v * 1000.0f, 1);
-        lcd_driver_print(&lcd, " mV");
+        lcd_driver_print_P(&lcd, PSTR(" mV"));
     }
     else
     {
         lcd_driver_printFloat(&lcd, v, 3);
-        lcd_driver_print(&lcd, " V");
+        lcd_driver_print_P(&lcd, PSTR(" V"));
     }
 }
 

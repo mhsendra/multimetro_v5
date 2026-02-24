@@ -2,6 +2,7 @@
 #include "diode_utils.h"
 #include "adcmanager.h"
 #include "globals.h"
+#include "range_control.h"
 
 uint8_t getTPNumber(uint8_t pinValue)
 {
@@ -16,15 +17,25 @@ uint8_t getTPNumber(uint8_t pinValue)
 
 bool diodeConducts(uint8_t pinAnode, uint8_t pinCathode)
 {
-    // Aquí asumimos que ya se aplicó tensión de prueba entre anodo y cátodo
+    // Liberamos cualquier rango de medición previo
+    rng_release_for_gpio();
 
-    float mv = 0;
+    // Aplicamos tensión de prueba: ánodo HIGH, cátodo INPUT
+    pinMode(pinAnode, OUTPUT);
+    pinMode(pinCathode, INPUT);
+    digitalWrite(pinAnode, HIGH);
+    delay(5); // pequeña espera para estabilizar
 
-    // Medimos el voltaje entre anodo y cátodo
-    ADC_RANGE_ID selectedRange = adc_manager_autorange(ADC_CH_SHUNT1, &mv);
+    // Medimos voltaje entre ánodo y cátodo usando ADC single-ended (canal ZENER)
+    float Vf = measureADC_Single(ADC_CH_ZENER);
 
-    float v = mv / 1000.0f;
+    // Restauramos pines a INPUT para no afectar otros modos
+    pinMode(pinAnode, INPUT);
+    pinMode(pinCathode, INPUT);
 
-    // Consideramos que conduce si supera 0.2 V (diode forward drop)
-    return (v > 0.2f);
+    // Comprobamos si conduce (>0.2 V típico para diodo de silicio)
+    if (isnan(Vf))
+        return false;
+
+    return (Vf > 0.2f);
 }

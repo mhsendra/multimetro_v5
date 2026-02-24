@@ -11,12 +11,6 @@ float measureVAC_RMS(void);
 float measureVAC_Relative(void);
 
 // =====================================================
-// Pantallas
-// =====================================================
-void showVAC(void);
-void showVAC_Relative(void);
-
-// =====================================================
 // Modo completo
 // =====================================================
 void measureVAC_MODE(VacSubMode submode);
@@ -26,5 +20,11 @@ void measureVAC_MODE(VacSubMode submode);
 // =====================================================
 void measureVAC_Main(void);
 void measureVAC_Rel(void);
+
+// Canal ADC a usar para VAC
+#define ADC_CHANNEL_FOR_VAC ADC_CH_VOLTAGE
+
+// Wrapper genérico para leer un canal single
+float measureADC_Single(enum ADC_CHANNEL_SINGLE ch);
 
 #endif // MODE_VAC_H

@@ -14,15 +14,6 @@ float measureEnergy(void);
 float measureCurrentEstimated(void);
 
 // =====================================================
-// Pantallas
-// =====================================================
-void showVDC(void);
-void showVDC_Relative(void);
-void showPower(void);
-void showEnergy(void);
-void showEstCurrent(void);
-
-// =====================================================
 // Modo completo
 // =====================================================
 void measureVDC_MODE(VdcSubMode submode);

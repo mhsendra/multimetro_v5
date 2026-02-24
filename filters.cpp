@@ -42,8 +42,6 @@ float movingRMS(float x)
 // =====================================================
 float median3(float a, float b, float c)
 {
-    float m;
-
     // Ordenar a, b, c sin usar swap()
     if (a > b)
     {
@@ -75,12 +73,3 @@ float applyButterworth(Butterworth2 &f, float x)
     return f.update(x);
 }
 
-// =====================================================
-// INICIALIZACIÓN DE FILTROS
-// =====================================================
-void initFilters()
-{
-    bw_vdc.reset();
-    bw_vac.reset();
-    bw_current.reset();
-}
