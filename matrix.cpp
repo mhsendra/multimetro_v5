@@ -8,16 +8,14 @@
 // =====================================================
 void matrix_disconnect_all()
 {
-    // Apagar todos los SSR
-    mcp23017.digitalWrite(pin.SSR_LOW, LOW);
-    mcp23017.digitalWrite(pin.SSR_MID, LOW);
-    mcp23017.digitalWrite(pin.SSR_HIGH, LOW);
-    mcp23017.digitalWrite(pin.SSR_SHUNT, LOW);
+    // SSR controlados por el MCU
+    digitalWrite(pin.SSR_LOW, LOW);
+    digitalWrite(pin.SSR_MID, LOW);
+    digitalWrite(pin.SSR_HIGH, LOW);
+    digitalWrite(pin.SSR_SHUNT, LOW);
 
-    // Liberar rangos OHM
-    mcp23017.digitalWrite(pin.RNG0, LOW);
-    mcp23017.digitalWrite(pin.RNG1, LOW);
-    mcp23017.digitalWrite(pin.RNG2, LOW);
+    // SSR controlado por el MCP23017
+    mcp23017.digitalWrite(mcpPin.SSR_ZENER_CTRL, LOW);
 }
 
 // =====================================================
@@ -30,59 +28,56 @@ void matrix_select_tp3() { matrix_disconnect_all(); }
 // =====================================================
 // SHUNTS (CORRIENTE)
 // =====================================================
+// Todos los shunts están en el MCU → digitalWrite(pin.xxx)
+
 void matrix_shunt_low()
 {
     matrix_disconnect_all();
-    mcp23017.digitalWrite(pin.SSR_SHUNT, HIGH); // Shunt 0.1Ω
+    digitalWrite(pin.SSR_SHUNT, HIGH); // Shunt 0.1Ω
 }
 
 void matrix_shunt_mid()
 {
     matrix_disconnect_all();
-    mcp23017.digitalWrite(pin.SSR_SHUNT, HIGH); // Shunt 0.033Ω
+    digitalWrite(pin.SSR_SHUNT, HIGH); // Shunt 0.033Ω
 }
 
 void matrix_shunt_high()
 {
     matrix_disconnect_all();
-    mcp23017.digitalWrite(pin.SSR_SHUNT, HIGH); // Puede ser el mismo pin en V5
+    digitalWrite(pin.SSR_SHUNT, HIGH); // Shunt 0.01Ω o equivalente
 }
 
 // =====================================================
 // RANGOS OHM
 // =====================================================
+// Según tu esquema, los rangos OHM están en el MCU (PD5, PD6, PD7)
+
 void matrix_ohm_low()
 {
     matrix_disconnect_all();
-    mcp23017.digitalWrite(pin.RNG0, LOW);
-    mcp23017.digitalWrite(pin.RNG1, LOW);
-    mcp23017.digitalWrite(pin.RNG2, LOW);
+    digitalWrite(pin.SSR_LOW, HIGH);
 }
 
 void matrix_ohm_mid()
 {
     matrix_disconnect_all();
-    mcp23017.digitalWrite(pin.RNG0, HIGH);
-    mcp23017.digitalWrite(pin.RNG1, LOW);
-    mcp23017.digitalWrite(pin.RNG2, LOW);
+    digitalWrite(pin.SSR_MID, HIGH);
 }
 
 void matrix_ohm_high()
 {
     matrix_disconnect_all();
-    mcp23017.digitalWrite(pin.RNG0, LOW);
-    mcp23017.digitalWrite(pin.RNG1, HIGH);
-    mcp23017.digitalWrite(pin.RNG2, LOW);
+    digitalWrite(pin.SSR_HIGH, HIGH);
 }
 
 // =====================================================
-// ZENER
+// ZENER (MCP23017)
 // =====================================================
 void matrix_zener()
 {
     matrix_disconnect_all();
-    // Activar SSR Zener a través del MCP23017
-    mcp23017.digitalWrite(mcpPin.SSR_ZENER, HIGH);
+    mcp23017.digitalWrite(mcpPin.SSR_ZENER_CTRL, HIGH);
 }
 
 // =====================================================
@@ -90,10 +85,22 @@ void matrix_zener()
 // =====================================================
 void matrix_init()
 {
-    // Configura todos los pines MCP como OUTPUT por defecto
+    // Configurar todos los pines del MCP23017 como OUTPUT
     for (uint8_t i = 0; i < 16; i++)
     {
         mcp23017.pinMode(i, OUTPUT);
         mcp23017.digitalWrite(i, LOW);
     }
+
+    // Configurar los SSR del MCU como OUTPUT
+    pinMode(pin.SSR_LOW, OUTPUT);
+    pinMode(pin.SSR_MID, OUTPUT);
+    pinMode(pin.SSR_HIGH, OUTPUT);
+    pinMode(pin.SSR_SHUNT, OUTPUT);
+
+    // Asegurar que arrancan apagados
+    digitalWrite(pin.SSR_LOW, LOW);
+    digitalWrite(pin.SSR_MID, LOW);
+    digitalWrite(pin.SSR_HIGH, LOW);
+    digitalWrite(pin.SSR_SHUNT, LOW);
 }

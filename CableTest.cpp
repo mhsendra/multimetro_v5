@@ -5,7 +5,6 @@
 #include "auto_hold.h"
 #include "backlight.h"
 #include "autoOff.h"
-#include "range_control.h"
 #include "globals.h"
 #include "adcmanager.h"
 

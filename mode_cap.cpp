@@ -4,7 +4,6 @@
 #include "lcd_ui.h"
 #include "backlight.h"
 #include "auto_Hold.h"
-#include "range_control.h"
 #include "filters.h"
 #include "globals.h"
 #include "cap_utils.h"
@@ -172,8 +171,6 @@ void measureCAP_ESR(void) { showESR(); }
 // ===============================
 void measureCAPMode(void)
 {
-    rng_release_for_gpio();
-
     switch (capSubMode)
     {
     case CAP_RANGE_NF:

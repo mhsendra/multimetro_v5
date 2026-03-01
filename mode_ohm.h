@@ -5,6 +5,7 @@
 #include "config.h"
 
 void resetOhmMode();
+void ohm_select_range(ADC_RANGE_ID range);
 
 // =====================================================
 // Medición

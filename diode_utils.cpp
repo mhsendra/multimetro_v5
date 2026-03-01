@@ -2,7 +2,6 @@
 #include "diode_utils.h"
 #include "adcmanager.h"
 #include "globals.h"
-#include "range_control.h"
 
 uint8_t getTPNumber(uint8_t pinValue)
 {
@@ -17,9 +16,6 @@ uint8_t getTPNumber(uint8_t pinValue)
 
 bool diodeConducts(uint8_t pinAnode, uint8_t pinCathode)
 {
-    // Liberamos cualquier rango de medición previo
-    rng_release_for_gpio();
-
     // Aplicamos tensión de prueba: ánodo HIGH, cátodo INPUT
     pinMode(pinAnode, OUTPUT);
     pinMode(pinCathode, INPUT);

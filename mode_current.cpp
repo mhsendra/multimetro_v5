@@ -3,7 +3,6 @@
 #include "lcd_ui.h"
 #include "backlight.h"
 #include "auto_Hold.h"
-#include "range_control.h"
 #include "config.h"
 #include <math.h>
 #include "adcmanager.h"
@@ -42,7 +41,6 @@ static float measureCurrent_Shunt_RAW(CurrentRange range)
 // ------------------------------------------------------------
 float measureCURRENT_RAW(void)
 {
-    rng_release_for_gpio();
 
     float i = measureCurrent_Shunt_RAW(CURR_RANGE_5A);
 

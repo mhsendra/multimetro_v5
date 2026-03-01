@@ -25,6 +25,6 @@ void autoOff_update()
         autoOffTriggered = true;
 
         // Apagar multímetro
-        digitalWrite(pin.PIN_ONOFF, LOW);
+        digitalWrite(pin.POWER_HOLD_CTRL, LOW);
     }
 }

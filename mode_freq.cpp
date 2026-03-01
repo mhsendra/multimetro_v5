@@ -4,10 +4,10 @@
 #include "backlight.h"
 #include "auto_hold.h"
 #include "autoOff.h"
-#include "range_control.h"
 #include "measurement.h"
 #include <Arduino.h>
 #include "mode_state.h"
+#include "mode_NCV.h"
 
 void resetFreqMode()
 {
@@ -19,8 +19,6 @@ void resetFreqMode()
 // =====================================================
 static float freq_read_voltage()
 {
-    rng_release_for_gpio(); // liberar RNGx para uso fuera de OHM
-
     measurement_result_t meas = measure_channels();
     return meas.voltage;
 }
@@ -217,6 +215,9 @@ void measureFREQ()
         break;
     case FREQ_PERIOD:
         showPeriod();
+        break;
+    case FREQ_NCV:
+        measureNCV(); // aquí usas mcpPin.NCV, etc.
         break;
     }
 }

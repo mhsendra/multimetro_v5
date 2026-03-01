@@ -5,7 +5,6 @@
 #include "backlight.h"
 #include "auto_Hold.h"
 #include "autoOff.h"
-#include "range_control.h"
 #include "mode_current.h"
 #include <Arduino.h>
 #include <math.h>
@@ -20,8 +19,6 @@ void resetInductMode()
 // ===============================
 static float measureInductance_raw()
 {
-    rng_release_for_gpio();
-
     pinMode(pin.TP1, OUTPUT);
     pinMode(pin.TP2, OUTPUT);
     digitalWrite(pin.TP1, LOW);

@@ -76,7 +76,9 @@ enum MeasureMode
     MEASURE_CURR_mA = 4,
     MEASURE_CURR_A = 5,
     MEASURE_CAP = 6,
-    MEASURE_L = 7
+    MEASURE_L = 7,
+    MODE_NCV = 8
+
 };
 
 enum CurrentRange
@@ -91,7 +93,8 @@ enum FreqSubMode
     FREQ_MAIN,
     FREQ_DUTY,
     FREQ_PULSE_WIDTH,
-    FREQ_PERIOD
+    FREQ_PERIOD,
+    FREQ_NCV
 };
 
 enum VdcSubMode

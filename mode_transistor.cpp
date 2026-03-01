@@ -4,7 +4,6 @@
 #include "auto_Hold.h"
 #include "backlight.h"
 #include "measurement.h"
-#include "range_control.h"
 #include <Arduino.h>
 #include <math.h>
 #include <stdio.h>

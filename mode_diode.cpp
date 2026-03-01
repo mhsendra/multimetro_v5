@@ -4,7 +4,6 @@
 #include "auto_Hold.h"
 #include "backlight.h"
 #include "measurement.h"
-#include "range_control.h"
 #include <Arduino.h>
 #include <math.h>
 
@@ -16,7 +15,6 @@ static const uint8_t TP[2] = {pin.TP1, pin.TP2};
 // =====================================
 float measureDiode(DiodeSubMode submode)
 {
-    rng_release_for_gpio();
 
     if (submode == DIODE_ZENER)
     {

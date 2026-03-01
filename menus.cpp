@@ -15,6 +15,7 @@
 #include "globals.h"
 #include "backlight.h"
 #include "auto_Hold.h"
+#include "mode_NCV.h"
 
 // ===================== TABLAS DE SUBMODOS =====================
 
@@ -23,7 +24,8 @@ SubModeEntry freqSubModes[] = {
     {FREQ_MAIN, "1) Frequency", measureFreq_Main},
     {FREQ_DUTY, "2) Duty", measureFreq_Duty},
     {FREQ_PULSE_WIDTH, "3) PulseWidth", measureFreq_PulseWidth},
-    {FREQ_PERIOD, "4) Period", measureFreq_Period}};
+    {FREQ_PERIOD, "4) Period", measureFreq_Period},
+    {FREQ_NCV, "5) NCV", measureNCV}};
 ModeTable freqTable = {"FREQ MENU", freqSubModes, sizeof(freqSubModes) / sizeof(freqSubModes[0])};
 
 // VDC

@@ -9,7 +9,6 @@
 #include "lcd_driver.h"
 #include "backlight.h"
 #include "auto_Hold.h"
-#include "range_control.h"
 #include "filters.h"
 #include <math.h>
 #include "measurement.h"
@@ -22,6 +21,28 @@ static float filterOhm = -1e9f;
 void resetOhmMode()
 {
     filterOhm = -1e9f;
+}
+
+void ohm_select_range(ADC_RANGE_ID range)
+{
+    digitalWrite(pin.SSR_LOW, LOW);
+    digitalWrite(pin.SSR_MID, LOW);
+    digitalWrite(pin.SSR_HIGH, LOW);
+
+    switch (range)
+    {
+    case RANGE_LOW:
+        digitalWrite(pin.SSR_LOW, HIGH);
+        break;
+
+    case RANGE_MEDIUM:
+        digitalWrite(pin.SSR_MID, HIGH);
+        break;
+
+    case RANGE_HIGH:
+        digitalWrite(pin.SSR_HIGH, HIGH);
+        break;
+    }
 }
 
 // ===============================
@@ -111,7 +132,15 @@ static const char *getOhmRangeSymbol(ADC_RANGE_ID range)
 static void showOHM_R(void)
 {
     float R = measureOHM_calibrated(ohmActiveRange);
-    ohmActiveRange = ohm_autorange(R, ohmActiveRange);
+    ADC_RANGE_ID newRange = ohm_autorange(R, ohmActiveRange);
+
+    if (newRange != ohmActiveRange)
+    {
+        ohmActiveRange = newRange;
+        ohm_select_range(ohmActiveRange);
+        delay(10); // estabilización opcional
+        return;    // en el siguiente ciclo se mide ya con el rango correcto
+    }
 
     if (autoHold_update(R))
         R = autoHold_getHeldValue();
@@ -125,8 +154,15 @@ static void showOHM_R(void)
 static void showOHM_Cont(void)
 {
     float R = measureOHM_calibrated(ohmActiveRange);
-    ohmActiveRange = ohm_autorange(R, ohmActiveRange);
+    ADC_RANGE_ID newRange = ohm_autorange(R, ohmActiveRange);
 
+    if (newRange != ohmActiveRange)
+    {
+        ohmActiveRange = newRange;
+        ohm_select_range(ohmActiveRange);
+        delay(10); // estabilización opcional
+        return;    // en el siguiente ciclo se mide ya con el rango correcto
+    }
     static bool beepState = false;
     if (R < OHM_CONT_THRESHOLD - 2.0f)
         beepState = true;
@@ -151,8 +187,15 @@ static void showOHM_Cont(void)
 static void showOHM_Rel(void)
 {
     float R = measureOHM_calibrated(ohmActiveRange);
-    ohmActiveRange = ohm_autorange(R, ohmActiveRange);
+    ADC_RANGE_ID newRange = ohm_autorange(R, ohmActiveRange);
 
+    if (newRange != ohmActiveRange)
+    {
+        ohmActiveRange = newRange;
+        ohm_select_range(ohmActiveRange);
+        delay(10); // estabilización opcional
+        return;    // en el siguiente ciclo se mide ya con el rango correcto
+    }
     static float relRef = NAN;
     if (isnan(relRef))
         relRef = R;
@@ -171,8 +214,15 @@ static void showOHM_Rel(void)
 static void showOHM_Cable(void)
 {
     float R = measureOHM_calibrated(ohmActiveRange);
-    ohmActiveRange = ohm_autorange(R, ohmActiveRange);
+    ADC_RANGE_ID newRange = ohm_autorange(R, ohmActiveRange);
 
+    if (newRange != ohmActiveRange)
+    {
+        ohmActiveRange = newRange;
+        ohm_select_range(ohmActiveRange);
+        delay(10); // estabilización opcional
+        return;    // en el siguiente ciclo se mide ya con el rango correcto
+    }
     lcd_ui_clear(&lcd);
     if (R < 2.0f)
         lcd_driver_print_P(&lcd, PSTR("CABLE OK "));
@@ -194,7 +244,6 @@ void measureOHM_Cable_Wrap(void) { measureOHM_MODE(OHM_CABLE); }
 // ===============================
 void measureOHM_MODE(OhmSubMode submode)
 {
-    rng_restore_for_ohm();
     adc_manager_set_sps(ADC_SPS_475);
 
     switch (submode)

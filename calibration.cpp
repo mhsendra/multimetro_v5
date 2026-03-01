@@ -12,7 +12,6 @@
 #include "globals.h"
 #include "config.h"
 #include "measurement.h"
-#include "range_control.h"
 #include "pins.h"
 
 // =====================================================
@@ -38,10 +37,8 @@ void loadCalibration()
 // =====================================================
 static float measureOHM_RAW(OhmSubMode mode)
 {
-    rng_release_for_gpio(); // liberar pines
-
     // Activar SSR según submodo OHM
-    ohm_select_range(mode);
+    ohm_select_range(ohmActiveRange);
 
     // Medición
     measurement_result_t meas = measure_channels();
@@ -103,7 +100,7 @@ void calibrateOHM()
     delay(300);
 
     OhmSubMode mode = OHM_MAIN;          // rango principal para calibración
-    ohm_select_range(mode);              // activa SSR correcto
+    ohm_select_range(ohmActiveRange);    // activa SSR correcto
     float r_meas = measureOHM_RAW(mode); // medición RAW
 
     cal.ohm = 1000.0 / r_meas; // guardar factor de calibración

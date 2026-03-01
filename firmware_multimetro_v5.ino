@@ -18,6 +18,9 @@ Adafruit_MCP23X17 mcpHardware;
 
 void setup()
 {
+    pinMode(pin.POWER_HOLD_CTRL, OUTPUT);
+    digitalWrite(pin.POWER_HOLD_CTRL, LOW);
+
     // -------------------- INICIALIZACIÓN BÁSICA --------------------
     Wire.begin();         // Inicializar bus I2C
     Serial.begin(115200); // Serial para debug
@@ -28,7 +31,12 @@ void setup()
 
     // Configurar pines del selector como INPUT_PULLUP
     for (uint8_t i = mcpPin.SEL0; i <= mcpPin.SEL7; i++)
+    {
         ioExpander->pinMode(i, INPUT_PULLUP);
+    };
+    ioExpander->pinMode(mcpPin.NCV, INPUT_PULLUP);
+    ioExpander->pinMode(mcpPin.BOOST_HV_CTRL, INPUT_PULLUP);
+    ioExpander->pinMode(mcpPin.SSR_ZENER_CTRL, INPUT_PULLUP);
 
     // -------------------- LCD 1602 I2C --------------------
     // Dirección 0x7C según tu módulo
@@ -47,6 +55,8 @@ void setup()
     currentModeIndex = 0;
     modes[currentModeIndex].currentSubModeId = modes[currentModeIndex].table->subModes[0].id;
     showMenu(currentModeIndex);
+
+    digitalWrite(pin.POWER_HOLD_CTRL, HIGH);
 
     Serial.println("Setup completado!");
 }

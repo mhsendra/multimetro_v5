@@ -6,12 +6,9 @@
 #include "autoOff.h"
 #include "measurement.h"
 #include <Arduino.h>
-#include "range_control.h"
 
 float measureMosfet()
 {
-    rng_release_for_gpio();
-
     pinMode(pin.TP3, OUTPUT);
     digitalWrite(pin.TP3, LOW);
     pinMode(pin.TP2, INPUT);
